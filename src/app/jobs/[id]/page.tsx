@@ -22,9 +22,10 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
             <div>
               <h1 className="text-3xl font-bold text-gray-900">{job.title}</h1>
               <p className="text-xl font-medium text-gray-700 mt-1">{job.company}</p>
-              <div className="mt-2 flex gap-4 text-sm text-gray-500">
+              <div className="mt-2 flex flex-wrap gap-4 text-sm text-gray-500">
                   <span>📍 {job.location || 'Remote'}</span>
-                  <span>🔗 {job.sourceName}</span>
+                  <span>🔗 {job.sourceName} ({job.sourceType})</span>
+                  <span>📅 Fetched: {job.firstSeenAt.toLocaleDateString()}</span>
               </div>
             </div>
             <div className="flex flex-col gap-2">
@@ -32,6 +33,24 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
               <AlertResendButton jobId={job.id} />
             </div>
           </div>
+
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+             <div className="bg-gray-50 p-3 rounded border border-gray-100">
+                <p className="font-bold text-gray-600 uppercase text-xs mb-1">URLs</p>
+                <div className="flex flex-col gap-1 overflow-hidden overflow-ellipsis">
+                   <p>Original: <a href={job.applyUrl} target="_blank" className="text-blue-600 hover:underline">{job.applyUrl}</a></p>
+                   {job.finalUrl && <p>Final: <a href={job.finalUrl} target="_blank" className="text-blue-600 hover:underline">{job.finalUrl}</a></p>}
+                </div>
+             </div>
+             <div className="bg-gray-50 p-3 rounded border border-gray-100">
+                <p className="font-bold text-gray-600 uppercase text-xs mb-1">Alert Status</p>
+                <div className="flex flex-col gap-1">
+                   <p>Slack: {job.alertedSlackAt ? `✅ ${job.alertedSlackAt.toLocaleString()}` : '❌ Not sent'}</p>
+                   <p>Email: {job.alertedEmailAt ? `✅ ${job.alertedEmailAt.toLocaleString()}` : '❌ Not sent'}</p>
+                </div>
+             </div>
+          </div>
+
           <div className="mt-8 border-t border-gray-100 pt-8">
             <h2 className="text-lg font-bold text-gray-900 mb-4">Evaluation Result</h2>
             <div className={`p-4 rounded-md ${job.worldwideStatus === 'ACCEPTED' ? 'bg-green-50 border border-green-100' : 'bg-red-50 border border-red-100'}`}>
