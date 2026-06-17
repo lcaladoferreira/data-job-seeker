@@ -1,0 +1,88 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+generator client {
+  provider = "prisma-client-js"
+}
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+}
+
+enum WorldwideStatus {
+  ACCEPTED
+  REJECTED
+}
+
+model Job {
+  id                 String          @id @default(cuid())
+  sourceName         String
+  sourceType         String
+  title              String
+  company            String
+  location           String?
+  remote             Boolean         @default(true)
+  seniority          String?
+  applyUrl           String          @unique
+  finalUrl           String?
+  descriptionText    String
+  descriptionSnippet String?
+  worldwideStatus    WorldwideStatus
+  worldwideEvidence  String[]
+  rejectionReason    String?
+  matchedKeywords    String[]
+  matchedRejectPatterns String[]
+  urlStatus          String?
+  httpStatus         Int?
+  contentHash        String?
+  firstSeenAt        DateTime        @default(now())
+  lastSeenAt         DateTime        @default(now())
+  alertedSlackAt     DateTime?
+  alertedEmailAt     DateTime?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  alertLogs          AlertLog[]
+
+  @@index([worldwideStatus])
+  @@index([company])
+  @@index([sourceName])
+}
+
+model Source {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  type        String
+  enabled     Boolean  @default(true)
+  config      Json?
+  lastRunAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model IngestionRun {
+  id           String   @id @default(cuid())
+  startedAt    DateTime @default(now())
+  finishedAt   DateTime?
+  status       String   // SUCCESS, FAILED, PARTIAL
+  jobsFound    Int      @default(0)
+  jobsAccepted Int      @default(0)
+  jobsRejected Int      @default(0)
+  errorLog     String?
+  createdAt    DateTime @default(now())
+}
+
+model AlertLog {
+  id        String   @id @default(cuid())
+  jobId     String
+  job       Job      @relation(fields: [jobId], references: [id])
+  type      String   // SLACK, EMAIL
+  status    String   // SUCCESS, FAILED
+  error     String?
+  sentAt    DateTime @default(now())
+}
