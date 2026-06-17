@@ -75,7 +75,12 @@ async function processJob(rawJob: RawJob) {
     return 'EXISTING';
   }
 
-  const evaluation = evaluateWorldwideEligibility(rawJob.descriptionText + ' ' + (rawJob.location || ''));
+  // Use the new evaluation logic with separate title, location, description
+  const evaluation = evaluateWorldwideEligibility(
+    rawJob.title,
+    rawJob.location || '',
+    rawJob.descriptionText
+  );
 
   const job = await prisma.job.create({
     data: {
@@ -93,6 +98,7 @@ async function processJob(rawJob: RawJob) {
       worldwideEvidence: evaluation.evidence,
       rejectionReason: evaluation.rejectionReason,
       matchedRejectPatterns: evaluation.matchedRejectPatterns,
+      matchedKeywords: evaluation.matchedRoleKeywords, // Now correctly filling matchedKeywords
     },
   });
 

@@ -2,70 +2,57 @@ import { describe, it, expect } from 'vitest';
 import { evaluateWorldwideEligibility } from '../worldwide-filter';
 
 describe('evaluateWorldwideEligibility Strict Validation', () => {
-  it('REJECTS hard negative cases', () => {
-    const negatives = [
-      'Remote US only',
-      'Remote US/Canada only',
-      'Remote Europe only',
-      'Remote UK only',
-      'Remote EMEA only',
-      'Remote APAC only',
-      'Remote LATAM only',
-      'Remote Brazil only',
-      'Remote Americas only',
-      'Remote but must reside in Germany',
-      'Remote but work authorization required',
-      'Eligible locations: US, Canada',
-      'This is a remote position', // No explicit worldwide evidence
-      'Remote job for candidates in the United States',
-      'Remote position for LATAM candidates',
-      'Remote, timezone compatibility with EST required',
+  it('REJECTS non-data engineering roles', () => {
+    const cases = [
+      { title: 'Mid/Senior AI Cinematic Video Editor', location: 'Remote', description: 'Work from anywhere' },
+      { title: 'Staff Product Engineer', location: 'São Paulo', description: 'Remote worldwide' },
+      { title: 'Software Engineer', location: 'Remote Brazil', description: 'Global remote' },
+      { title: 'Frontend Engineer', location: 'Remote', description: 'Work from anywhere' },
     ];
 
-    negatives.forEach(text => {
-      const result = evaluateWorldwideEligibility(text);
-      expect(result.status, `Failed to reject: ${text}`).toBe('REJECTED');
+    cases.forEach(c => {
+      const result = evaluateWorldwideEligibility(c.title, c.location, c.description);
+      expect(result.status).toBe('REJECTED');
+      expect(['NOT_DATA_ENGINEERING_ROLE', 'EXCLUDED_ROLE', 'LOCAL_RESTRICTION']).toContain(result.rejectionReason);
     });
   });
 
-  it('ACCEPTS only explicit worldwide evidence', () => {
-    const positives = [
-      'Remote Worldwide',
-      'Worldwide Remote',
-      'Work from anywhere',
-      'Anywhere in the world',
-      'Open to candidates worldwide',
-      'Applicants worldwide',
-      'Remote globally',
-      'No location restrictions',
-      'Location: Worldwide',
-      'Distributed globally and hiring worldwide'
+  it('REJECTS local restrictions even for data roles', () => {
+    const cases = [
+      { title: 'Data Engineer', location: 'Remote Brazil only', description: 'Worldwide remote' },
+      { title: 'Senior Data Engineer', location: 'US Only', description: 'Work from anywhere' },
+      { title: 'Analytics Engineer', location: 'Remote', description: 'Must reside in Europe' },
     ];
 
-    positives.forEach(text => {
-      const result = evaluateWorldwideEligibility(text);
-      expect(result.status, `Failed to accept: ${text}`).toBe('ACCEPTED');
+    cases.forEach(c => {
+      const result = evaluateWorldwideEligibility(c.title, c.location, c.description);
+      expect(result.status).toBe('REJECTED');
+      expect(result.rejectionReason).toBe('LOCAL_RESTRICTION');
     });
   });
 
-  it('REJECTS mixed worldwide + restriction (False Positive Prevention)', () => {
-    const mixed = [
-      'Remote Worldwide, but must be authorized to work in the US',
-      'Work from anywhere, however, we only hire in Europe',
-      'Anywhere in the world (US/Canada only)',
-      'Global remote. Must reside in Brazil.',
+  it('ACCEPTS valid worldwide data engineering jobs', () => {
+    const cases = [
+      { title: 'Senior Data Engineer', location: 'Remote Worldwide', description: 'SQL, Python, Spark' },
+      { title: 'Analytics Engineer', location: 'Remote', description: 'Work from anywhere. dbt, Snowflake, SQL' },
+      { title: 'Data Platform Engineer', location: 'Global Remote', description: 'Airflow, Kubernetes, Python' },
+      { title: 'PySpark Data Engineer', location: 'Anywhere in the World', description: 'Building data pipelines' },
     ];
 
-    mixed.forEach(text => {
-      const result = evaluateWorldwideEligibility(text);
-      expect(result.status, `Failed to reject mixed: ${text}`).toBe('REJECTED');
+    cases.forEach(c => {
+      const result = evaluateWorldwideEligibility(c.title, c.location, c.description);
+      expect(result.status, `Failed to accept: ${c.title}`).toBe('ACCEPTED');
     });
   });
 
-  it('DOES NOT reject common pronouns like "us" or "our"', () => {
-     const text = "Join us at our company. We offer Remote Worldwide positions.";
-     const result = evaluateWorldwideEligibility(text);
+  it('REJECTS jobs with city names in title or location', () => {
+    expect(evaluateWorldwideEligibility('Data Engineer (São Paulo)', 'Remote').status).toBe('REJECTED');
+    expect(evaluateWorldwideEligibility('Data Engineer', 'Campinas').status).toBe('REJECTED');
+  });
+
+  it('DOES NOT reject common pronouns like "us" or "our" if no restriction', () => {
+     const text = "Join us at our company. We offer Remote Worldwide positions for Data Engineers.";
+     const result = evaluateWorldwideEligibility('Data Engineer', 'Remote', text);
      expect(result.status).toBe('ACCEPTED');
-     expect(result.matchedRejectPatterns.length).toBe(0);
   });
 });

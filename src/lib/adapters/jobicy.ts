@@ -6,7 +6,8 @@ export class JobicyAdapter implements JobAdapter {
 
   async fetchJobs(): Promise<RawJob[]> {
     try {
-      const response = await axios.get('https://jobicy.com/api/v2/remote-jobs?count=50&geo=anywhere');
+      // Use "data-science" as it's the closest category, then our filter will refine it
+      const response = await axios.get('https://jobicy.com/api/v2/remote-jobs?count=50&geo=anywhere&industry=data-science');
       if (!response.data || !Array.isArray(response.data.jobs)) return [];
 
       return response.data.jobs.map((job: any) => ({

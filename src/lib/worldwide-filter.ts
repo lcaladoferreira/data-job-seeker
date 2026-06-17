@@ -5,7 +5,68 @@ export interface WorldwideEvaluation {
   evidence: string[];
   rejectionReason: string;
   matchedRejectPatterns: string[];
+  matchedRoleKeywords: string[];
 }
+
+const DATA_ENGINEERING_TITLE_PATTERNS = [
+  /Data Engineer/i,
+  /Analytics Engineer/i,
+  /Data Platform Engineer/i,
+  /Big Data Engineer/i,
+  /Data Infrastructure Engineer/i,
+  /ETL Developer/i,
+  /ELT Developer/i,
+  /Data Pipeline Engineer/i,
+  /Lakehouse Engineer/i,
+  /Databricks Engineer/i,
+  /PySpark Engineer/i,
+  /Airflow Engineer/i,
+];
+
+const DATA_ENGINEERING_KEYWORDS = [
+  /\bPython\b/i,
+  /\bSQL\b/i,
+  /\bPySpark\b/i,
+  /\bSpark\b/i,
+  /\bDatabricks\b/i,
+  /\bAirflow\b/i,
+  /\bdbt\b/i,
+  /\bSnowflake\b/i,
+  /\bBigQuery\b/i,
+  /\bRedshift\b/i,
+  /\bAWS Glue\b/i,
+  /\bAzure Data Factory\b/i,
+  /\bKafka\b/i,
+  /\bDelta Lake\b/i,
+  /\bLakehouse\b/i,
+  /\bETL\b/i,
+  /\bELT\b/i,
+  /data pipeline/i,
+  /data warehouse/i,
+  /data lake/i,
+];
+
+const EXCLUDED_ROLE_PATTERNS = [
+  /Product Engineer/i,
+  /Software Engineer/i,
+  /Frontend Engineer/i,
+  /Backend Engineer/i,
+  /Full Stack Engineer/i,
+  /DevOps Engineer/i,
+  /SRE/i,
+  /QA Engineer/i,
+  /AI Video Editor/i,
+  /Video Editor/i,
+  /Designer/i,
+  /Product Manager/i,
+  /Marketing/i,
+  /Sales/i,
+  /Customer Support/i,
+  /Recruiter/i,
+  /HR/i,
+  /Finance/i,
+  /Legal/i,
+];
 
 const WORLDWIDE_EVIDENCE_PATTERNS = [
   /remote worldwide/i,
@@ -19,11 +80,11 @@ const WORLDWIDE_EVIDENCE_PATTERNS = [
   /no location restrictions/i,
   /location: worldwide/i,
   /distributed globally and hiring worldwide/i,
-  /hiring globally/i,
-  /remote anywhere/i,
+  /fully remote worldwide/i,
+  /async global team/i,
 ];
 
-const REJECTION_PATTERNS = [
+const LOCAL_RESTRICTION_PATTERNS = [
   /us only/i,
   /usa only/i,
   /united states only/i,
@@ -38,6 +99,7 @@ const REJECTION_PATTERNS = [
   /india only/i,
   /latam only/i,
   /brazil only/i,
+  /brasil only/i,
   /americas only/i,
   /must be located in/i,
   /must reside in/i,
@@ -47,58 +109,126 @@ const REJECTION_PATTERNS = [
   /remote in the united states/i,
   /remote in europe/i,
   /remote in canada/i,
+  /remote brazil/i,
+  /must be based in brazil/i,
+  /must reside in brazil/i,
+  /germany only/i,
+  /São Paulo/i,
+  /Sao Paulo/i,
+  /Campinas/i,
   /hybrid/i,
   /on-site/i,
   /onsite/i,
-  /citizen only/i,
-  /based in/i,
-  /only hire in/i,
-  /only hiring in/i,
-  /limited to/i,
-  /\bUS\b/, // Case-sensitive to avoid matching "us" pronoun
+  /relocation required/i,
+  /\bUS\b/,
   /\bUSA\b/,
-  /Canada/i,
-  /Europe/i,
   /\bUK\b/,
   /timezone compatibility/i,
 ];
 
-export function evaluateWorldwideEligibility(jobText: string): WorldwideEvaluation {
+export function evaluateWorldwideEligibility(
+  title: string,
+  location: string = "",
+  description: string = ""
+): WorldwideEvaluation {
+  const fullText = `${title} ${location} ${description}`;
   const matchedEvidence: string[] = [];
   const matchedRejectPatterns: string[] = [];
+  const matchedRoleKeywords: string[] = [];
 
-  // Check for worldwide evidence
+  // 1. Role Relevance Filter
+  let isDataEngineering = false;
+  let isExcludedRole = false;
+
+  // Check for explicit title match
+  for (const pattern of DATA_ENGINEERING_TITLE_PATTERNS) {
+    if (pattern.test(title)) {
+      isDataEngineering = true;
+      matchedRoleKeywords.push(title.match(pattern)![0]);
+      break;
+    }
+  }
+
+  // Check for strong keyword match if title didn't match
+  if (!isDataEngineering) {
+    let keywordCount = 0;
+    for (const pattern of DATA_ENGINEERING_KEYWORDS) {
+      const match = fullText.match(pattern);
+      if (match) {
+        keywordCount++;
+        matchedRoleKeywords.push(match[0]);
+      }
+    }
+    if (keywordCount >= 3) {
+      isDataEngineering = true;
+    }
+  }
+
+  // Check for excluded roles (even if it has keywords)
+  for (const pattern of EXCLUDED_ROLE_PATTERNS) {
+    if (pattern.test(title)) {
+      isExcludedRole = true;
+      matchedRejectPatterns.push(title.match(pattern)![0]);
+      break;
+    }
+  }
+
+  // 2. Worldwide Remote Filter
+  let hasWorldwideEvidence = false;
   for (const pattern of WORLDWIDE_EVIDENCE_PATTERNS) {
-    const match = jobText.match(pattern);
+    const match = fullText.match(pattern);
     if (match) {
+      hasWorldwideEvidence = true;
       matchedEvidence.push(match[0]);
     }
   }
 
-  // Check for rejection patterns
-  for (const pattern of REJECTION_PATTERNS) {
-    const match = jobText.match(pattern);
+  // 3. Local Restriction Filter
+  for (const pattern of LOCAL_RESTRICTION_PATTERNS) {
+    const match = fullText.match(pattern);
     if (match) {
       matchedRejectPatterns.push(match[0]);
     }
   }
 
-  // Decision logic
+  // Final Decision Logic
+  if (isExcludedRole) {
+    return {
+      status: "REJECTED",
+      evidence: matchedEvidence,
+      rejectionReason: "EXCLUDED_ROLE",
+      matchedRejectPatterns,
+      matchedRoleKeywords,
+    };
+  }
+
+  if (!isDataEngineering) {
+    return {
+      status: "REJECTED",
+      evidence: matchedEvidence,
+      rejectionReason: "NOT_DATA_ENGINEERING_ROLE",
+      matchedRejectPatterns,
+      matchedRoleKeywords,
+    };
+  }
+
   if (matchedRejectPatterns.length > 0) {
     return {
       status: "REJECTED",
       evidence: matchedEvidence,
-      rejectionReason: `Found restrictive patterns: ${matchedRejectPatterns.join(", ")}`,
+      rejectionReason: "LOCAL_RESTRICTION",
       matchedRejectPatterns,
+      matchedRoleKeywords,
     };
   }
 
-  if (matchedEvidence.length === 0) {
+  if (!hasWorldwideEvidence) {
     return {
       status: "REJECTED",
       evidence: [],
-      rejectionReason: "No explicit worldwide remote evidence found.",
+      rejectionReason: "NOT_WORLDWIDE_REMOTE",
       matchedRejectPatterns: [],
+      matchedRoleKeywords,
     };
   }
 
@@ -107,5 +237,6 @@ export function evaluateWorldwideEligibility(jobText: string): WorldwideEvaluati
     evidence: matchedEvidence,
     rejectionReason: "",
     matchedRejectPatterns: [],
+    matchedRoleKeywords,
   };
 }

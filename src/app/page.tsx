@@ -20,7 +20,7 @@ export default async function DashboardPage({
       ] : undefined,
     },
     orderBy: { firstSeenAt: 'desc' },
-  }).catch(() => []); // Graceful handle for build-time collection
+  }).catch(() => []);
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -28,7 +28,7 @@ export default async function DashboardPage({
         <div className="mb-8 flex items-start justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Worldwide Data Jobs</h1>
-            <p className="text-gray-500 mt-1 text-sm">Monitoring for explicitly worldwide remote opportunities.</p>
+            <p className="text-gray-500 mt-1 text-sm">Monitoring ONLY for explicitly worldwide remote **Data Engineering** opportunities.</p>
           </div>
           <div className="flex gap-4">
             <IngestButton />
@@ -88,7 +88,7 @@ export default async function DashboardPage({
                 <div className="w-full md:w-auto text-right">
                   {job.worldwideStatus === 'ACCEPTED' ? (
                     <span className="inline-block rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-800 uppercase tracking-tighter">
-                      WORLDWIDE
+                      ACCEPTED
                     </span>
                   ) : (
                     <span className="inline-block rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-800 uppercase tracking-tighter">
@@ -99,16 +99,24 @@ export default async function DashboardPage({
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2">
+                {job.worldwideStatus === 'ACCEPTED' && job.matchedKeywords.map((kw, i) => (
+                  <span key={`kw-${i}`} className="rounded bg-indigo-50 px-2 py-0.5 text-[10px] text-indigo-700 border border-indigo-200 font-bold uppercase">
+                    Role: {kw}
+                  </span>
+                ))}
                 {job.worldwideEvidence.map((ev, i) => (
-                  <span key={i} className="rounded bg-blue-50 px-2 py-0.5 text-[10px] text-blue-700 border border-blue-200 font-medium">
+                  <span key={`ev-${i}`} className="rounded bg-blue-50 px-2 py-0.5 text-[10px] text-blue-700 border border-blue-200 font-medium">
                     {ev}
                   </span>
                 ))}
               </div>
 
               {job.rejectionReason && (
-                <div className="mt-3 bg-red-50 p-2 rounded text-[11px] text-red-700 border border-red-100">
-                  <strong>Rejection Reason:</strong> {job.rejectionReason}
+                <div className="mt-3 bg-red-50 p-2 rounded text-[11px] text-red-700 border border-red-100 font-bold">
+                  REJECTION REASON: {job.rejectionReason}
+                  {job.matchedRejectPatterns.length > 0 && (
+                    <span className="ml-2 font-normal opacity-75">({job.matchedRejectPatterns.join(', ')})</span>
+                  )}
                 </div>
               )}
             </div>

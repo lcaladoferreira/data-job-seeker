@@ -56,9 +56,9 @@ describe('System Requirements', () => {
   it('persists accepted jobs with worldwideEvidence', async () => {
     mockFetchJobs.mockResolvedValueOnce([{
       applyUrl: 'https://example.com/accepted',
-      title: 'Global Dev',
+      title: 'Senior Data Engineer',
       company: 'GoodCorp',
-      descriptionText: 'Remote Worldwide',
+      descriptionText: 'Remote Worldwide. SQL, Python, Spark.',
       sourceName: 'RemoteOK',
       sourceType: 'API',
       remote: true,
@@ -77,9 +77,9 @@ describe('System Requirements', () => {
   it('does not alert duplicate jobs twice', async () => {
     mockFetchJobs.mockResolvedValueOnce([{
       applyUrl: 'https://example.com/duplicate',
-      title: 'Global Dev',
+      title: 'Senior Data Engineer',
       company: 'GoodCorp',
-      descriptionText: 'Remote Worldwide',
+      descriptionText: 'Remote Worldwide. SQL, Python, Spark.',
       sourceName: 'RemoteOK',
       sourceType: 'API',
       remote: true,
