@@ -20,6 +20,17 @@ export class HackerNewsAdapter implements JobAdapter {
           const comment = commentResponse.data;
           if (comment && comment.text && !comment.deleted && !comment.dead) {
             const text = comment.text;
+
+            // Preliminary selective check for Hacker News to avoid heavy processing of unrelated roles
+            const isRelevant =
+                /data engineer/i.test(text) ||
+                /analytics engineer/i.test(text) ||
+                /data pipeline/i.test(text) ||
+                /spark/i.test(text) ||
+                /snowflake/i.test(text);
+
+            if (!isRelevant) continue;
+
             const lines = text.split('<p>')[0].split('|');
             const company = lines[0]?.trim() || 'Unknown';
             const title = lines[1]?.trim() || 'Job Opening';

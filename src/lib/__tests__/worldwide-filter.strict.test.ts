@@ -8,6 +8,8 @@ describe('evaluateWorldwideEligibility Strict Validation', () => {
       { title: 'Staff Product Engineer', location: 'São Paulo', description: 'Remote worldwide' },
       { title: 'Software Engineer', location: 'Remote Brazil', description: 'Global remote' },
       { title: 'Frontend Engineer', location: 'Remote', description: 'Work from anywhere' },
+      { title: 'Data Scientist', location: 'Worldwide', description: 'Machine learning and stats' },
+      { title: 'Data Analyst', location: 'Work from anywhere', description: 'SQL and Excel' },
     ];
 
     cases.forEach(c => {
@@ -19,15 +21,30 @@ describe('evaluateWorldwideEligibility Strict Validation', () => {
 
   it('REJECTS local restrictions even for data roles', () => {
     const cases = [
-      { title: 'Data Engineer', location: 'Remote Brazil only', description: 'Worldwide remote' },
+      { title: 'Data Engineer', location: 'Remote Brazil', description: 'Worldwide remote' },
       { title: 'Senior Data Engineer', location: 'US Only', description: 'Work from anywhere' },
       { title: 'Analytics Engineer', location: 'Remote', description: 'Must reside in Europe' },
+      { title: 'Data Platform Engineer', location: 'India', description: 'Global remote' },
+      { title: 'ETL Developer', location: 'Remote', description: 'Timezone compatibility with EST required' },
+    ];
+
+    cases.forEach(c => {
+      const result = evaluateWorldwideEligibility(c.title, c.location, c.description);
+      expect(result.status, `Failed to reject local restriction: ${c.location} ${c.description}`).toBe('REJECTED');
+      expect(result.rejectionReason).toBe('LOCAL_RESTRICTION');
+    });
+  });
+
+  it('REJECTS remote without worldwide evidence', () => {
+    const cases = [
+      { title: 'Data Engineer', location: 'Remote', description: 'Join our data team.' },
+      { title: 'Senior Data Engineer', location: 'Anywhere', description: 'We are hiring.' },
     ];
 
     cases.forEach(c => {
       const result = evaluateWorldwideEligibility(c.title, c.location, c.description);
       expect(result.status).toBe('REJECTED');
-      expect(result.rejectionReason).toBe('LOCAL_RESTRICTION');
+      expect(result.rejectionReason).toBe('NOT_WORLDWIDE_REMOTE');
     });
   });
 

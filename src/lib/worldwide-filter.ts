@@ -9,23 +9,21 @@ export interface WorldwideEvaluation {
 }
 
 const DATA_ENGINEERING_TITLE_PATTERNS = [
-  /Data Engineer/i,
-  /Analytics Engineer/i,
-  /Data Platform Engineer/i,
-  /Big Data Engineer/i,
-  /Data Infrastructure Engineer/i,
-  /ETL Developer/i,
-  /ELT Developer/i,
-  /Data Pipeline Engineer/i,
-  /Lakehouse Engineer/i,
-  /Databricks Engineer/i,
-  /PySpark Engineer/i,
-  /Airflow Engineer/i,
+  /\bData Engineer\b/i,
+  /\bAnalytics Engineer\b/i,
+  /\bData Platform Engineer\b/i,
+  /\bBig Data Engineer\b/i,
+  /\bData Infrastructure Engineer\b/i,
+  /\bETL Developer\b/i,
+  /\bELT Developer\b/i,
+  /\bData Pipeline Engineer\b/i,
+  /\bLakehouse Engineer\b/i,
+  /\bDatabricks Engineer\b/i,
+  /\bPySpark Engineer\b/i,
+  /\bAirflow Engineer\b/i,
 ];
 
 const DATA_ENGINEERING_KEYWORDS = [
-  /\bPython\b/i,
-  /\bSQL\b/i,
   /\bPySpark\b/i,
   /\bSpark\b/i,
   /\bDatabricks\b/i,
@@ -66,6 +64,9 @@ const EXCLUDED_ROLE_PATTERNS = [
   /HR/i,
   /Finance/i,
   /Legal/i,
+  /\bData Scientist\b/i, // Reject generic Data Scientist
+  /\bData Analyst\b/i,    // Reject generic Data Analyst
+  /\bMachine Learning Engineer\b/i, // Reject unless specialized
 ];
 
 const WORLDWIDE_EVIDENCE_PATTERNS = [
@@ -123,7 +124,12 @@ const LOCAL_RESTRICTION_PATTERNS = [
   /\bUS\b/,
   /\bUSA\b/,
   /\bUK\b/,
+  /\bIndia\b/i,
+  /\bCanada\b/i,
+  /\bBrazil\b/i,
+  /\bBrasil\b/i,
   /timezone compatibility/i,
+  /timezone overlap/i,
 ];
 
 export function evaluateWorldwideEligibility(
@@ -149,8 +155,17 @@ export function evaluateWorldwideEligibility(
     }
   }
 
-  // Check for strong keyword match if title didn't match
-  if (!isDataEngineering) {
+  // Check for excluded roles (even if it has keywords) - Priority over DE title
+  for (const pattern of EXCLUDED_ROLE_PATTERNS) {
+    if (pattern.test(title)) {
+      isExcludedRole = true;
+      matchedRejectPatterns.push(title.match(pattern)![0]);
+      break;
+    }
+  }
+
+  // Check for strong keyword match if title didn't match DE but isn't excluded
+  if (!isDataEngineering && !isExcludedRole) {
     let keywordCount = 0;
     for (const pattern of DATA_ENGINEERING_KEYWORDS) {
       const match = fullText.match(pattern);
@@ -161,15 +176,6 @@ export function evaluateWorldwideEligibility(
     }
     if (keywordCount >= 3) {
       isDataEngineering = true;
-    }
-  }
-
-  // Check for excluded roles (even if it has keywords)
-  for (const pattern of EXCLUDED_ROLE_PATTERNS) {
-    if (pattern.test(title)) {
-      isExcludedRole = true;
-      matchedRejectPatterns.push(title.match(pattern)![0]);
-      break;
     }
   }
 
