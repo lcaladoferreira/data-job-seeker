@@ -1,0 +1,4 @@
+[
+  { "name": "StackOverflow Data Jobs", "url": "https://stackoverflow.com/jobs/feed?q=Data+Engineer" },
+  { "name": "Indeed RSS Feed", "url": "https://www.indeed.com/rss?q=Data+Engineer" }
+]

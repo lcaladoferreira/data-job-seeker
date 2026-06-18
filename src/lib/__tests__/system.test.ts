@@ -25,7 +25,10 @@ vi.mock('../adapters/arbeitnow', () => ({ ArbeitnowAdapter: function() { return 
 vi.mock('../adapters/hackernews', () => ({ HackerNewsAdapter: function() { return { name: 'HackerNews', fetchJobs: vi.fn().mockResolvedValue([]) } } }));
 
 vi.mock('../notifications/slack', () => ({ sendSlackNotification: vi.fn() }));
-vi.mock('../notifications/email', () => ({ sendEmailNotification: vi.fn() }));
+vi.mock('../notifications/email', () => ({
+  sendEmailNotification: vi.fn(),
+  sendEmailDigest: vi.fn()
+}));
 
 describe('System Requirements', () => {
   beforeEach(() => {
