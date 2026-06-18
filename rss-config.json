@@ -1,5 +1,10 @@
 [
   { "name": "WWR Data", "url": "https://weworkremotely.com/categories/remote-data-jobs.rss" },
   { "name": "Remotive Data", "url": "https://remotive.com/remote-jobs/data/feed" },
-  { "name": "Jobicy Data", "url": "https://jobicy.com/feed-remote-jobs?category=data" }
+  { "name": "Jobicy Data", "url": "https://jobicy.com/feed-remote-jobs?category=data" },
+  { "name": "Arbeitnow Data", "url": "https://www.arbeitnow.com/remote-data-jobs.rss" },
+  { "name": "SimplyHired Data", "url": "https://www.simplyhired.com/search?q=data+engineer&f=122&rss=1" },
+  { "name": "Jobspresso Data", "url": "https://jobspresso.co/category/data-science-jobs/feed/" },
+  { "name": "Indeed Worldwide Data", "url": "https://www.indeed.com/rss?q=data+engineer+worldwide" },
+  { "name": "Monster Worldwide Data", "url": "https://www.monster.com/jobs/search/rss/?q=data-engineer&where=worldwide" }
 ]

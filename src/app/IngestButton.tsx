@@ -33,6 +33,11 @@ export default function IngestButton() {
           {result.error ? <p className="text-sm text-red-700">{result.error}</p> : (
             <div className="text-xs text-gray-700">
               <p className="font-bold text-green-700 text-sm mb-2 underline underline-offset-4">Ingestion Summary</p>
+              {result.status === 'INSUFFICIENT_DATA' && (
+                <div className="mb-3 bg-red-100 border border-red-200 p-2 rounded text-red-700 font-bold">
+                  {result.message}
+                </div>
+              )}
               <div className="grid grid-cols-3 gap-2 mb-3 bg-gray-50 p-2 rounded">
                 <div className="text-center"><p className="font-bold text-lg">{result.totalFound}</p><p className="text-[9px] uppercase">Found</p></div>
                 <div className="text-center text-green-600"><p className="font-bold text-lg">{result.totalAccepted}</p><p className="text-[9px] uppercase">Accepted</p></div>

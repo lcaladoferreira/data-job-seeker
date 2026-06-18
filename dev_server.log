@@ -1,0 +1,135 @@
+
+> worldwide-data-jobs-monitor@0.1.0 dev
+> next dev
+
+ ⚠ Port 3000 is in use, trying 3001 instead.
+ ⚠ Port 3001 is in use, trying 3002 instead.
+ ⚠ Port 3002 is in use, trying 3003 instead.
+   ▲ Next.js 15.2.8
+   - Local:        http://localhost:3003
+   - Network:      http://192.168.0.2:3003
+   - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 2.2s
+ ○ Compiling /login ...
+ ✓ Compiled /login in 6.6s (709 modules)
+ GET /login 200 in 7488ms
+ ○ Compiling /api/login ...
+ ✓ Compiled /api/login in 781ms (716 modules)
+ POST /api/login 200 in 985ms
+ GET /login 200 in 122ms
+ ○ Compiling / ...
+ ✓ Compiled / in 1146ms (783 modules)
+prisma:error
+Invalid `prisma.job.findMany()` invocation:
+
+
+Can't reach database server at `localhost:5432`
+
+Please make sure your database server is running at `localhost:5432`.
+prisma:error
+Invalid `prisma.job.count()` invocation:
+
+
+Can't reach database server at `localhost:5432`
+
+Please make sure your database server is running at `localhost:5432`.
+ GET / 200 in 1623ms
+prisma:error
+Invalid `prisma.job.findMany()` invocation:
+
+
+Can't reach database server at `localhost:5432`
+
+Please make sure your database server is running at `localhost:5432`.
+prisma:error
+Invalid `prisma.job.count()` invocation:
+
+
+Can't reach database server at `localhost:5432`
+
+Please make sure your database server is running at `localhost:5432`.
+ GET /?status=REJECTED&limit=30&search=&source= 200 in 85ms
+ ✓ Compiled in 367ms (329 modules)
+ ✓ Compiled in 1184ms (783 modules)
+ ✓ Compiled /api/seed in 229ms (783 modules)
+prisma:error
+Invalid `prisma.job.deleteMany()` invocation:
+
+
+Can't reach database server at `localhost:5432`
+
+Please make sure your database server is running at `localhost:5432`.
+ ⨯ Error [PrismaClientInitializationError]:
+Invalid `prisma.job.deleteMany()` invocation:
+
+
+Can't reach database server at `localhost:5432`
+
+Please make sure your database server is running at `localhost:5432`.
+    at async GET (src/app/api/seed/route.ts:6:2)
+  4 |
+  5 | export async function GET() {
+> 6 |   await prisma.job.deleteMany({});
+    |  ^
+  7 |
+  8 |   const jobs = [];
+  9 |   for (let i = 1; i <= 35; i++) { {
+  clientVersion: '6.1.0',
+  errorCode: undefined
+}
+ ⨯ Error [PrismaClientInitializationError]:
+Invalid `prisma.job.deleteMany()` invocation:
+
+
+Can't reach database server at `localhost:5432`
+
+Please make sure your database server is running at `localhost:5432`.
+    at async GET (src/app/api/seed/route.ts:6:2)
+  4 |
+  5 | export async function GET() {
+> 6 |   await prisma.job.deleteMany({});
+    |  ^
+  7 |
+  8 |   const jobs = [];
+  9 |   for (let i = 1; i <= 35; i++) { {
+  clientVersion: '6.1.0',
+  errorCode: undefined
+}
+ GET /api/seed 500 in 597ms
+ GET /login 200 in 314ms
+ ✓ Compiled /api/login in 126ms (470 modules)
+ POST /api/login 200 in 169ms
+prisma:error
+Invalid `prisma.job.findMany()` invocation:
+
+
+Can't reach database server at `localhost:5432`
+
+Please make sure your database server is running at `localhost:5432`.
+prisma:error
+Invalid `prisma.job.count()` invocation:
+
+
+Can't reach database server at `localhost:5432`
+
+Please make sure your database server is running at `localhost:5432`.
+ GET / 200 in 134ms
+prisma:error
+Invalid `prisma.job.findMany()` invocation:
+
+
+Can't reach database server at `localhost:5432`
+
+Please make sure your database server is running at `localhost:5432`.
+prisma:error
+Invalid `prisma.job.count()` invocation:
+
+
+Can't reach database server at `localhost:5432`
+
+Please make sure your database server is running at `localhost:5432`.
+ GET /?status=REJECTED&limit=30&search=&source= 200 in 95ms
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: invalid stored block lengths
+ ✓ Compiled in 1710ms (765 modules)

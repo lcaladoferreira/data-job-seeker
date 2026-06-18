@@ -10,10 +10,9 @@ import { RSSAdapter } from './adapters/rss';
 import fs from 'fs';
 import path from 'path';
 import { evaluateWorldwideEligibility } from './worldwide-filter';
-import { WorldwideStatus } from '@prisma/client';
+import { WorldwideStatus, Job } from '@prisma/client';
 import { sendSlackNotification } from './notifications/slack';
-import { sendEmailNotification, sendEmailDigest } from './notifications/email';
-import { Job } from '@prisma/client';
+import { sendEmailDigest } from './notifications/email';
 import axios from 'axios';
 
 async function resolveFinalUrl(url: string): Promise<{ finalUrl: string; httpStatus: number }> {
@@ -64,31 +63,36 @@ export async function runIngestion() {
     console.error('Failed to load RSS config:', error);
   }
 
-  let totalFound = 0, totalAccepted = 0, totalRejected = 0;
+  let totalFound = 0, totalAccepted = 0, totalRejected = 0, totalDuplicates = 0;
   const rejectionReasons: Record<string, number> = {};
-  const sourceBreakdown: Record<string, { found: number, accepted: number, rejected: number }> = {};
+  const sourceBreakdown: Record<string, { found: number, accepted: number, rejected: number, duplicates: number }> = {};
   const acceptedJobsForDigest: Job[] = [];
   const errors: string[] = [];
 
   for (const adapter of adapters) {
-    sourceBreakdown[adapter.name] = { found: 0, accepted: 0, rejected: 0 };
+    sourceBreakdown[adapter.name] = { found: 0, accepted: 0, rejected: 0, duplicates: 0 };
     try {
       const rawJobs = await adapter.fetchJobs();
-      totalFound += rawJobs.length;
       sourceBreakdown[adapter.name].found = rawJobs.length;
+      totalFound += rawJobs.length;
 
       for (const rawJob of rawJobs) {
-        const { result, job, evaluation } = await processJob(rawJob);
-        if (result === 'ACCEPTED' && job) {
+        const result = await processJob(rawJob);
+
+        if (result.status === 'ACCEPTED' && result.job) {
           totalAccepted++;
           sourceBreakdown[adapter.name].accepted++;
-          acceptedJobsForDigest.push(job);
-        } else if (result === 'REJECTED') {
+          acceptedJobsForDigest.push(result.job);
+        } else if (result.status === 'REJECTED') {
           totalRejected++;
           sourceBreakdown[adapter.name].rejected++;
-          if (evaluation?.rejectionReason) {
-            rejectionReasons[evaluation.rejectionReason] = (rejectionReasons[evaluation.rejectionReason] || 0) + 1;
+          if (result.evaluation?.rejectionReason) {
+            const reason = result.evaluation.rejectionReason;
+            rejectionReasons[reason] = (rejectionReasons[reason] || 0) + 1;
           }
+        } else if (result.status === 'DUPLICATE') {
+          totalDuplicates++;
+          sourceBreakdown[adapter.name].duplicates++;
         }
       }
     } catch (error) {
@@ -96,8 +100,10 @@ export async function runIngestion() {
     }
   }
 
-  // Send Email Digest for newly accepted jobs
-  if (acceptedJobsForDigest.length > 0) {
+  // MINIMUM THRESHOLD CHECK
+  const isSufficient = totalAccepted >= 30;
+
+  if (isSufficient && acceptedJobsForDigest.length > 0) {
     try {
       await sendEmailDigest(acceptedJobsForDigest);
     } catch (error) {
@@ -105,29 +111,47 @@ export async function runIngestion() {
     }
   }
 
+  const finalStatus = !isSufficient ? 'INSUFFICIENT_DATA' : (errors.length === 0 ? 'SUCCESS' : (errors.length < adapters.length ? 'PARTIAL' : 'FAILED'));
+
   await prisma.ingestionRun.update({
     where: { id: run.id },
     data: {
       finishedAt: new Date(),
-      status: errors.length === 0 ? 'SUCCESS' : (errors.length < adapters.length ? 'PARTIAL' : 'FAILED'),
+      status: finalStatus,
       jobsFound: totalFound,
       jobsAccepted: totalAccepted,
       jobsRejected: totalRejected,
-      errorLog: JSON.stringify({ errors, rejectionReasons, sourceBreakdown }, null, 2),
+      errorLog: JSON.stringify({
+        errors,
+        rejectionReasons,
+        sourceBreakdown,
+        totalDuplicates,
+        accounting: {
+          sum: totalAccepted + totalRejected + totalDuplicates,
+          total: totalFound,
+          match: (totalAccepted + totalRejected + totalDuplicates) === totalFound
+        }
+      }, null, 2),
     },
   });
 
-  return { totalFound, totalAccepted, totalRejected, rejectionReasons, sourceBreakdown };
+  return {
+    totalFound,
+    totalAccepted,
+    totalRejected,
+    totalDuplicates,
+    rejectionReasons,
+    sourceBreakdown,
+    status: finalStatus,
+    message: isSufficient ? undefined : "Not enough qualified worldwide data engineer jobs found."
+  };
 }
 
 async function processJob(rawJob: RawJob) {
-  const { finalUrl, httpStatus } = await resolveFinalUrl(rawJob.applyUrl);
-
+  // Check for duplication before expensive operations if possible
   const existingJob = await prisma.job.findFirst({
     where: {
       OR: [
-        { applyUrl: rawJob.applyUrl },
-        { finalUrl: finalUrl },
         { title: rawJob.title, company: rawJob.company }
       ]
     },
@@ -138,10 +162,20 @@ async function processJob(rawJob: RawJob) {
       where: { id: existingJob.id },
       data: { lastSeenAt: new Date() },
     });
-    return { result: 'EXISTING' };
+    return { status: 'DUPLICATE' as const };
   }
 
-  // Use the new evaluation logic with separate title, location, description
+  const { finalUrl, httpStatus } = await resolveFinalUrl(rawJob.applyUrl);
+
+  // Re-check with final URL
+  const existingByUrl = await prisma.job.findFirst({
+    where: { finalUrl: finalUrl }
+  });
+
+  if (existingByUrl) {
+    return { status: 'DUPLICATE' as const };
+  }
+
   const evaluation = evaluateWorldwideEligibility(
     rawJob.title,
     rawJob.location || '',
@@ -172,9 +206,8 @@ async function processJob(rawJob: RawJob) {
 
   if (job.worldwideStatus === 'ACCEPTED') {
     await sendSlackNotification(job);
-    // Email digest is handled in runIngestion
-    return { result: 'ACCEPTED', job, evaluation };
+    return { status: 'ACCEPTED' as const, job, evaluation };
   }
 
-  return { result: 'REJECTED', evaluation };
+  return { status: 'REJECTED' as const, evaluation };
 }

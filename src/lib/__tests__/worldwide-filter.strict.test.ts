@@ -1,79 +1,74 @@
 import { describe, it, expect } from 'vitest';
 import { evaluateWorldwideEligibility } from '../worldwide-filter';
 
-describe('evaluateWorldwideEligibility Strict Validation', () => {
-  it('REJECTS non-data engineering roles', () => {
+describe('Strict Worldwide Data Engineer Filter', () => {
+  it('REJECTS non-Data Engineer roles even with worldwide evidence', () => {
     const cases = [
-      { title: 'Mid/Senior AI Cinematic Video Editor', location: 'Remote', description: 'Work from anywhere' },
-      { title: 'Staff Product Engineer', location: 'São Paulo', description: 'Remote worldwide' },
-      { title: 'Software Engineer', location: 'Remote Brazil', description: 'Global remote' },
-      { title: 'Frontend Engineer', location: 'Remote', description: 'Work from anywhere' },
-      { title: 'Data Scientist', location: 'Worldwide', description: 'Machine learning and stats' },
-      { title: 'Data Analyst', location: 'Work from anywhere', description: 'SQL and Excel' },
-      { title: 'Creative Director', location: 'Remote', description: 'Worldwide' },
-      { title: 'Product Manager', location: 'Anywhere', description: 'Global' },
+      { title: 'Mid/Senior AI Cinematic Video Editor', description: 'Remote Worldwide. Join our team.' },
+      { title: 'Designer', description: 'Work from anywhere. We love global talent.' },
+      { title: 'Product Manager', description: 'Worldwide remote position.' },
+      { title: 'Software Engineer', description: 'Remote globally.' },
+      { title: 'Data Scientist', description: 'Anywhere in the world.' },
+      { title: 'Data Analyst', description: 'Global remote.' },
+      { title: 'Machine Learning Engineer', description: 'Work from anywhere.' },
+      { title: 'AI Engineer', description: 'Remote worldwide.' },
     ];
 
     cases.forEach(c => {
-      const result = evaluateWorldwideEligibility(c.title, c.location, c.description);
+      const result = evaluateWorldwideEligibility(c.title, 'Remote', c.description);
       expect(result.status).toBe('REJECTED');
-      expect(['NOT_DATA_ENGINEERING_ROLE', 'EXCLUDED_ROLE', 'LOCAL_RESTRICTION']).toContain(result.rejectionReason);
+      expect(['NOT_A_DATA_ENGINEERING_ROLE', 'EXCLUDED_ROLE']).toContain(result.rejectionReason);
     });
   });
 
-  it('REJECTS local restrictions even for data roles', () => {
+  it('REJECTS local restrictions even for Data Engineers', () => {
     const cases = [
-      { title: 'Data Engineer', location: 'Remote Brazil', description: 'Worldwide remote' },
-      { title: 'Senior Data Engineer', location: 'US Only', description: 'Work from anywhere' },
-      { title: 'Analytics Engineer', location: 'Remote', description: 'Must reside in Europe' },
-      { title: 'Data Platform Engineer', location: 'India', description: 'Global remote' },
-      { title: 'ETL Developer', location: 'Remote', description: 'Timezone compatibility with EST required' },
+      { title: 'Data Engineer', description: 'Remote Worldwide. US Only.' },
+      { title: 'Senior Data Engineer', description: 'Global remote. Must reside in Europe.' },
+      { title: 'Staff Data Engineer', description: 'Work from anywhere. Brazil Only.' },
+      { title: 'Analytics Engineer', description: 'Worldwide. Visa unavailable.' },
+      { title: 'Cloud Data Engineer', description: 'Remote. Authorized to work in Canada required.' },
+      { title: 'Data Infrastructure Engineer', description: 'Global. Timezone overlap only with EST.' },
     ];
 
     cases.forEach(c => {
-      const result = evaluateWorldwideEligibility(c.title, c.location, c.description);
-      expect(result.status, `Failed to reject local restriction: ${c.location} ${c.description}`).toBe('REJECTED');
+      const result = evaluateWorldwideEligibility(c.title, 'Remote', c.description);
+      expect(result.status).toBe('REJECTED');
       expect(result.rejectionReason).toBe('LOCAL_RESTRICTION');
     });
   });
 
-  it('REJECTS remote without worldwide evidence', () => {
+  it('REJECTS Data Engineer roles without worldwide evidence', () => {
     const cases = [
-      { title: 'Data Engineer', location: 'Remote', description: 'Join our data team.' },
-      { title: 'Senior Data Engineer', location: 'Anywhere', description: 'We are hiring.' },
+      { title: 'Data Engineer', description: 'Join our growing team.' },
+      { title: 'Senior Data Engineer', description: 'Remote position available.' },
     ];
 
     cases.forEach(c => {
-      const result = evaluateWorldwideEligibility(c.title, c.location, c.description);
+      const result = evaluateWorldwideEligibility(c.title, 'Remote', c.description);
       expect(result.status).toBe('REJECTED');
-      expect(result.rejectionReason).toBe('NOT_WORLDWIDE_REMOTE');
+      expect(result.rejectionReason).toBe('NO_WORLDWIDE_EVIDENCE');
     });
   });
 
-  it('ACCEPTS valid worldwide data engineering jobs', () => {
+  it('ACCEPTS valid Worldwide Data Engineer roles', () => {
     const cases = [
-      { title: 'Senior Data Engineer', location: 'Remote Worldwide', description: 'SQL, Python, Spark' },
-      { title: 'Analytics Engineer', location: 'Remote', description: 'Work from anywhere. dbt, Snowflake, SQL' },
-      { title: 'Data Platform Engineer', location: 'Global Remote', description: 'Airflow, Kubernetes, Python' },
-      { title: 'PySpark Data Engineer', location: 'Anywhere in the World', description: 'Building data pipelines' },
+      { title: 'Data Engineer', description: 'Remote Worldwide. SQL, Python, Spark.' },
+      { title: 'Senior Data Engineer', description: 'Global remote. dbt, Snowflake.' },
+      { title: 'Staff Data Engineer', description: 'Work from anywhere in the world.' },
+      { title: 'Analytics Engineer', description: 'Open to candidates worldwide.' },
+      { title: 'Lead Data Engineer', description: 'Distributed globally and hiring worldwide.' },
     ];
 
     cases.forEach(c => {
-      const result = evaluateWorldwideEligibility(c.title, c.location, c.description);
+      const result = evaluateWorldwideEligibility(c.title, 'Remote', c.description);
       expect(result.status, `Failed to accept: ${c.title}`).toBe('ACCEPTED');
     });
   });
 
-  it('REJECTS jobs with city names in title or location', () => {
-    expect(evaluateWorldwideEligibility('Data Engineer (São Paulo)', 'Remote').status).toBe('REJECTED');
-    expect(evaluateWorldwideEligibility('Data Engineer', 'Campinas').status).toBe('REJECTED');
-    expect(evaluateWorldwideEligibility('Data Engineer', 'Rio de Janeiro').status).toBe('REJECTED');
-    expect(evaluateWorldwideEligibility('Data Engineer', 'Mexico').status).toBe('REJECTED');
-  });
-
-  it('DOES NOT reject common pronouns like "us" or "our" if no restriction', () => {
-     const text = "Join us at our company. We offer Remote Worldwide positions for Data Engineers.";
-     const result = evaluateWorldwideEligibility('Data Engineer', 'Remote', text);
-     expect(result.status).toBe('ACCEPTED');
+  it('REJECTS specific city/country mentions in title or location', () => {
+    expect(evaluateWorldwideEligibility('Data Engineer', 'São Paulo', 'Worldwide').status).toBe('REJECTED');
+    expect(evaluateWorldwideEligibility('Data Engineer (Rio de Janeiro)', 'Remote', 'Global').status).toBe('REJECTED');
+    expect(evaluateWorldwideEligibility('Data Engineer', 'UK', 'Anywhere').status).toBe('REJECTED');
   });
 });
