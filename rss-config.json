@@ -1,4 +1,5 @@
 [
-  { "name": "StackOverflow Data Jobs", "url": "https://stackoverflow.com/jobs/feed?q=Data+Engineer" },
-  { "name": "Indeed RSS Feed", "url": "https://www.indeed.com/rss?q=Data+Engineer" }
+  { "name": "WWR Data", "url": "https://weworkremotely.com/categories/remote-data-jobs.rss" },
+  { "name": "Remotive Data", "url": "https://remotive.com/remote-jobs/data/feed" },
+  { "name": "Jobicy Data", "url": "https://jobicy.com/feed-remote-jobs?category=data" }
 ]

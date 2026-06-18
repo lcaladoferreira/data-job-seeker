@@ -51,10 +51,15 @@ const EXCLUDED_ROLE_PATTERNS = [
   /Backend Engineer/i,
   /Full Stack Engineer/i,
   /DevOps Engineer/i,
+  /Cloud Engineer/i,
+  /Systems Engineer/i,
   /SRE/i,
   /QA Engineer/i,
   /AI Video Editor/i,
   /Video Editor/i,
+  /Cinematic Video/i,
+  /Content Creator/i,
+  /Creative Director/i,
   /Designer/i,
   /Product Manager/i,
   /Marketing/i,
@@ -64,6 +69,8 @@ const EXCLUDED_ROLE_PATTERNS = [
   /HR/i,
   /Finance/i,
   /Legal/i,
+  /Account Manager/i,
+  /Operations Manager/i,
   /\bData Scientist\b/i, // Reject generic Data Scientist
   /\bData Analyst\b/i,    // Reject generic Data Analyst
   /\bMachine Learning Engineer\b/i, // Reject unless specialized
@@ -102,6 +109,9 @@ const LOCAL_RESTRICTION_PATTERNS = [
   /brazil only/i,
   /brasil only/i,
   /americas only/i,
+  /mexico only/i,
+  /germany only/i,
+  /france only/i,
   /must be located in/i,
   /must reside in/i,
   /authorized to work in/i,
@@ -113,10 +123,12 @@ const LOCAL_RESTRICTION_PATTERNS = [
   /remote brazil/i,
   /must be based in brazil/i,
   /must reside in brazil/i,
-  /germany only/i,
   /São Paulo/i,
   /Sao Paulo/i,
   /Campinas/i,
+  /Rio de Janeiro/i,
+  /Curitiba/i,
+  /Belo Horizonte/i,
   /hybrid/i,
   /on-site/i,
   /onsite/i,
@@ -130,6 +142,9 @@ const LOCAL_RESTRICTION_PATTERNS = [
   /\bBrasil\b/i,
   /timezone compatibility/i,
   /timezone overlap/i,
+  /overlap with/i,
+  /reside in/i,
+  /citizenship/i,
 ];
 
 export function evaluateWorldwideEligibility(
@@ -157,9 +172,9 @@ export function evaluateWorldwideEligibility(
 
   // Check for excluded roles (even if it has keywords) - Priority over DE title
   for (const pattern of EXCLUDED_ROLE_PATTERNS) {
-    if (pattern.test(title)) {
+    if (pattern.test(title) || pattern.test(location)) {
       isExcludedRole = true;
-      matchedRejectPatterns.push(title.match(pattern)![0]);
+      matchedRejectPatterns.push((title.match(pattern) || location.match(pattern))![0]);
       break;
     }
   }

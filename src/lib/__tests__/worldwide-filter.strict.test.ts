@@ -10,6 +10,8 @@ describe('evaluateWorldwideEligibility Strict Validation', () => {
       { title: 'Frontend Engineer', location: 'Remote', description: 'Work from anywhere' },
       { title: 'Data Scientist', location: 'Worldwide', description: 'Machine learning and stats' },
       { title: 'Data Analyst', location: 'Work from anywhere', description: 'SQL and Excel' },
+      { title: 'Creative Director', location: 'Remote', description: 'Worldwide' },
+      { title: 'Product Manager', location: 'Anywhere', description: 'Global' },
     ];
 
     cases.forEach(c => {
@@ -65,6 +67,8 @@ describe('evaluateWorldwideEligibility Strict Validation', () => {
   it('REJECTS jobs with city names in title or location', () => {
     expect(evaluateWorldwideEligibility('Data Engineer (São Paulo)', 'Remote').status).toBe('REJECTED');
     expect(evaluateWorldwideEligibility('Data Engineer', 'Campinas').status).toBe('REJECTED');
+    expect(evaluateWorldwideEligibility('Data Engineer', 'Rio de Janeiro').status).toBe('REJECTED');
+    expect(evaluateWorldwideEligibility('Data Engineer', 'Mexico').status).toBe('REJECTED');
   });
 
   it('DOES NOT reject common pronouns like "us" or "our" if no restriction', () => {

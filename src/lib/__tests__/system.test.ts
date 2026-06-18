@@ -23,6 +23,7 @@ vi.mock('../adapters/wwr', () => ({ WWRAdapter: function() { return { name: 'WWR
 vi.mock('../adapters/jobicy', () => ({ JobicyAdapter: function() { return { name: 'Jobicy', fetchJobs: vi.fn().mockResolvedValue([]) } } }));
 vi.mock('../adapters/arbeitnow', () => ({ ArbeitnowAdapter: function() { return { name: 'Arbeitnow', fetchJobs: vi.fn().mockResolvedValue([]) } } }));
 vi.mock('../adapters/hackernews', () => ({ HackerNewsAdapter: function() { return { name: 'HackerNews', fetchJobs: vi.fn().mockResolvedValue([]) } } }));
+vi.mock('../adapters/rss', () => ({ RSSAdapter: function() { return { name: 'RSS', fetchJobs: vi.fn().mockResolvedValue([]) } } }));
 
 vi.mock('../notifications/slack', () => ({ sendSlackNotification: vi.fn() }));
 vi.mock('../notifications/email', () => ({
