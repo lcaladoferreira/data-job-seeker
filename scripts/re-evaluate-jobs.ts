@@ -3,12 +3,13 @@ import { evaluateWorldwideEligibility } from '../src/lib/worldwide-filter';
 import { WorldwideStatus } from '@prisma/client';
 
 async function reEvaluate() {
-  console.log('Starting re-evaluation of all jobs...');
+  console.log('--- STARTING MASS RE-EVALUATION ---');
   const jobs = await prisma.job.findMany();
-  console.log(`Found ${jobs.length} jobs to evaluate.`);
+  console.log(`Found ${jobs.length} jobs in database.`);
 
-  let acceptedCount = 0;
-  let rejectedCount = 0;
+  let acceptedToRejected = 0;
+  let rejectedToAccepted = 0;
+  let maintained = 0;
 
   for (const job of jobs) {
     const evaluation = evaluateWorldwideEligibility(
@@ -17,27 +18,32 @@ async function reEvaluate() {
       job.descriptionText
     );
 
-    await prisma.job.update({
-      where: { id: job.id },
-      data: {
-        worldwideStatus: evaluation.status as WorldwideStatus,
-        rejectionReason: evaluation.rejectionReason,
-        matchedRejectPatterns: evaluation.matchedRejectPatterns,
-        matchedKeywords: evaluation.matchedRoleKeywords,
-        worldwideEvidence: evaluation.evidence,
-      },
-    });
+    const oldStatus = job.worldwideStatus;
+    const newStatus = evaluation.status as WorldwideStatus;
 
-    if (evaluation.status === 'ACCEPTED') {
-      acceptedCount++;
+    if (oldStatus !== newStatus) {
+      if (oldStatus === 'ACCEPTED' && newStatus === 'REJECTED') acceptedToRejected++;
+      if (oldStatus === 'REJECTED' && newStatus === 'ACCEPTED') rejectedToAccepted++;
+
+      await prisma.job.update({
+        where: { id: job.id },
+        data: {
+          worldwideStatus: newStatus,
+          rejectionReason: evaluation.rejectionReason,
+          matchedRejectPatterns: evaluation.matchedRejectPatterns,
+          matchedKeywords: evaluation.matchedRoleKeywords,
+          worldwideEvidence: evaluation.evidence,
+        },
+      });
     } else {
-      rejectedCount++;
+      maintained++;
     }
   }
 
-  console.log(`Re-evaluation complete.`);
-  console.log(`Accepted: ${acceptedCount}`);
-  console.log(`Rejected: ${rejectedCount}`);
+  console.log('--- RE-EVALUATION COMPLETE ---');
+  console.log(`Maintained status: ${maintained}`);
+  console.log(`Accepted -> Rejected (Cleaned): ${acceptedToRejected}`);
+  console.log(`Rejected -> Accepted (Restored): ${rejectedToAccepted}`);
 }
 
 reEvaluate()

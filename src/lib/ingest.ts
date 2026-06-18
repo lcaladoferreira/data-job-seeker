@@ -148,40 +148,76 @@ export async function runIngestion() {
 }
 
 async function processJob(rawJob: RawJob) {
-  // Check for duplication before expensive operations if possible
+  // 1. Initial check for existence
   const existingJob = await prisma.job.findFirst({
     where: {
       OR: [
-        { title: rawJob.title, company: rawJob.company }
+        { title: rawJob.title, company: rawJob.company },
+        { applyUrl: rawJob.applyUrl }
       ]
     },
   });
 
-  if (existingJob) {
-    await prisma.job.update({
-      where: { id: existingJob.id },
-      data: { lastSeenAt: new Date() },
-    });
-    return { status: 'DUPLICATE' as const };
-  }
-
-  const { finalUrl, httpStatus } = await resolveFinalUrl(rawJob.applyUrl);
-
-  // Re-check with final URL
-  const existingByUrl = await prisma.job.findFirst({
-    where: { finalUrl: finalUrl }
-  });
-
-  if (existingByUrl) {
-    return { status: 'DUPLICATE' as const };
-  }
-
+  // Always evaluate, even for existing jobs, to catch status changes due to filter updates
   const evaluation = evaluateWorldwideEligibility(
     rawJob.title,
     rawJob.location || '',
     rawJob.descriptionText
   );
 
+  if (existingJob) {
+    // Update existing job with new evaluation and timestamp
+    const updatedJob = await prisma.job.update({
+      where: { id: existingJob.id },
+      data: {
+        lastSeenAt: new Date(),
+        worldwideStatus: evaluation.status as WorldwideStatus,
+        worldwideEvidence: evaluation.evidence,
+        rejectionReason: evaluation.rejectionReason,
+        matchedRejectPatterns: evaluation.matchedRejectPatterns,
+        matchedKeywords: evaluation.matchedRoleKeywords,
+      },
+    });
+
+    // If it was newly accepted (was rejected before or was unknown), we treat it as accepted for this run
+    if (updatedJob.worldwideStatus === 'ACCEPTED' && existingJob.worldwideStatus === 'REJECTED') {
+       await sendSlackNotification(updatedJob);
+       return { status: 'ACCEPTED' as const, job: updatedJob, evaluation };
+    }
+
+    return { status: 'DUPLICATE' as const, evaluation };
+  }
+
+  const { finalUrl, httpStatus } = await resolveFinalUrl(rawJob.applyUrl);
+
+  // Re-check with final URL for existence
+  const existingByUrl = await prisma.job.findFirst({
+    where: { finalUrl: finalUrl }
+  });
+
+  if (existingByUrl) {
+    // Similar update logic for URL-based match
+    const updatedJob = await prisma.job.update({
+      where: { id: existingByUrl.id },
+      data: {
+        lastSeenAt: new Date(),
+        worldwideStatus: evaluation.status as WorldwideStatus,
+        worldwideEvidence: evaluation.evidence,
+        rejectionReason: evaluation.rejectionReason,
+        matchedRejectPatterns: evaluation.matchedRejectPatterns,
+        matchedKeywords: evaluation.matchedRoleKeywords,
+      },
+    });
+
+    if (updatedJob.worldwideStatus === 'ACCEPTED' && existingByUrl.worldwideStatus === 'REJECTED') {
+       await sendSlackNotification(updatedJob);
+       return { status: 'ACCEPTED' as const, job: updatedJob, evaluation };
+    }
+
+    return { status: 'DUPLICATE' as const, evaluation };
+  }
+
+  // Create new job
   const job = await prisma.job.create({
     data: {
       sourceName: rawJob.sourceName,

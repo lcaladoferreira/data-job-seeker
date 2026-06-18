@@ -32,19 +32,21 @@ const EXCLUDED_ROLE_PATTERNS = [
   /Designer/i,
   /Developer Advocate/i,
   /Product Manager/i,
+  /Product Engineer/i,
+  /Software Engineer/i,
+  /Frontend/i,
+  /Backend/i,
+  /Full Stack/i,
+  /Fullstack/i,
+  /DevOps/i,
+  /SRE/i,
+  /QA/i,
   /Data Analyst/i,
   /Data Scientist/i,
   /Machine Learning/i,
   /ML Engineer/i,
   /AI Engineer/i,
   /Prompt Engineer/i,
-  /Software Engineer/i,
-  /Frontend/i,
-  /Backend/i,
-  /Full Stack/i,
-  /DevOps/i,
-  /SRE/i,
-  /QA/i,
   /Marketing/i,
   /Sales/i,
   /Customer Success/i,
@@ -57,6 +59,9 @@ const EXCLUDED_ROLE_PATTERNS = [
   /Account Manager/i,
   /Creative Director/i,
   /Content Creator/i,
+  /Copywriter/i,
+  /Social Media/i,
+  /Virtual Assistant/i,
 ];
 
 // Evidence of WORLDWIDE remote
@@ -86,6 +91,8 @@ const LOCAL_RESTRICTION_PATTERNS = [
   /\bCanada Only\b/i,
   /\bBrazil Only\b/i,
   /\bBrasil Only\b/i,
+  /\bIndia Only\b/i,
+  /\bAustralia Only\b/i,
   /\bNorth America Only\b/i,
   /\bEurope Only\b/i,
   /\bEMEA Only\b/i,
@@ -124,19 +131,7 @@ export function evaluateWorldwideEligibility(
   const matchedRejectPatterns: string[] = [];
   const matchedRoleKeywords: string[] = [];
 
-  // 1. Role Gatekeeper
-  let isDataEngineering = false;
-
-  // Check for explicit title match against whitelist
-  for (const pattern of DATA_ENGINEERING_TITLE_PATTERNS) {
-    if (pattern.test(title)) {
-      isDataEngineering = true;
-      matchedRoleKeywords.push(title.match(pattern)![0]);
-      break;
-    }
-  }
-
-  // Check for excluded roles - FORCE REJECT
+  // 1. Role Gatekeeper - EXCLUSION FIRST
   for (const pattern of EXCLUDED_ROLE_PATTERNS) {
     if (pattern.test(title) || pattern.test(location)) {
       matchedRejectPatterns.push((title.match(pattern) || location.match(pattern))![0]);
@@ -147,6 +142,16 @@ export function evaluateWorldwideEligibility(
         matchedRejectPatterns,
         matchedRoleKeywords,
       };
+    }
+  }
+
+  // Check for explicit title match against whitelist
+  let isDataEngineering = false;
+  for (const pattern of DATA_ENGINEERING_TITLE_PATTERNS) {
+    if (pattern.test(title)) {
+      isDataEngineering = true;
+      matchedRoleKeywords.push(title.match(pattern)![0]);
+      break;
     }
   }
 

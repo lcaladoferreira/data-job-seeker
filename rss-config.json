@@ -6,5 +6,6 @@
   { "name": "SimplyHired Data", "url": "https://www.simplyhired.com/search?q=data+engineer&f=122&rss=1" },
   { "name": "Jobspresso Data", "url": "https://jobspresso.co/category/data-science-jobs/feed/" },
   { "name": "Indeed Worldwide Data", "url": "https://www.indeed.com/rss?q=data+engineer+worldwide" },
-  { "name": "Monster Worldwide Data", "url": "https://www.monster.com/jobs/search/rss/?q=data-engineer&where=worldwide" }
+  { "name": "Monster Worldwide Data", "url": "https://www.monster.com/jobs/search/rss/?q=data-engineer&where=worldwide" },
+  { "name": "RemoteOK Data", "url": "https://remoteok.com/remote-data-jobs.rss" }
 ]

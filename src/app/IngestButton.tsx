@@ -3,7 +3,24 @@ import { useState } from 'react';
 
 export default function IngestButton() {
   const [loading, setLoading] = useState(false);
+  const [reevaluating, setReevaluating] = useState(false);
   const [result, setResult] = useState<any>(null);
+
+  const handleReevaluate = async () => {
+    setReevaluating(true);
+    try {
+      const res = await fetch('/api/jobs/re-evaluate', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) {
+        alert(`Cleaned up ${data.cleanedCount} irrelevant jobs from the dashboard.`);
+        window.location.reload();
+      }
+    } catch (e) {
+      alert('Failed to re-evaluate jobs');
+    } finally {
+      setReevaluating(false);
+    }
+  };
 
   const handleIngest = async () => {
     setLoading(true);
@@ -25,9 +42,19 @@ export default function IngestButton() {
 
   return (
     <div className="relative">
-      <button onClick={handleIngest} disabled={loading} className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-bold text-white hover:bg-indigo-700 disabled:opacity-50 shadow-md">
-        {loading ? 'Running Ingestion...' : 'Trigger Manual Ingestion'}
-      </button>
+      <div className="flex gap-2">
+        <button
+          onClick={handleReevaluate}
+          disabled={reevaluating}
+          className="rounded-md bg-amber-600 px-4 py-2 text-sm font-bold text-white hover:bg-amber-700 disabled:opacity-50 shadow-md"
+          title="Re-run filter on all existing jobs to remove irrelevant ones"
+        >
+          {reevaluating ? 'Cleaning...' : 'Clean Dashboard'}
+        </button>
+        <button onClick={handleIngest} disabled={loading} className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-bold text-white hover:bg-indigo-700 disabled:opacity-50 shadow-md">
+          {loading ? 'Running Ingestion...' : 'Trigger Manual Ingestion'}
+        </button>
+      </div>
       {result && (
         <div className={`absolute right-0 top-12 z-50 w-80 rounded-md border p-4 shadow-xl bg-white ${result.error ? 'border-red-200 bg-red-50' : 'border-green-200 bg-white'}`}>
           {result.error ? <p className="text-sm text-red-700">{result.error}</p> : (
