@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { checkAuth } from '@/lib/auth';
-import { reEvaluateAllJobs } from '@/lib/re-evaluate';
+import { clearDatabase } from '@/lib/re-evaluate';
 
 export async function POST() {
   try {
     await checkAuth();
-    const updated = await reEvaluateAllJobs();
-    return NextResponse.json({ success: true, updated });
+    await clearDatabase();
+    return NextResponse.json({ success: true, message: 'Database cleared successfully' });
   } catch (error) {
     return NextResponse.json({ error: 'Unauthorized or failed' }, { status: 401 });
   }

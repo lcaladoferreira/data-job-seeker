@@ -17,8 +17,7 @@ const DATA_ENGINEERING_TITLE_PATTERNS = [
   /\bAnalytics Engineer\b/i,
   /\bData Platform Engineer\b/i,
   /\bBig Data Engineer\b/i,
-  /\bETL (Developer|Engineer)\b/i,
-  /\bELT (Developer|Engineer)\b/i,
+  /\bETL Engineer\b/i,
   /\bSpark Engineer\b/i,
   /\bCloud Data Engineer\b/i,
   /\bData Infrastructure Engineer\b/i,
@@ -30,7 +29,6 @@ const EXCLUDED_ROLE_PATTERNS = [
   /\bData Analyst\b/i,
   /\bBusiness Analyst\b/i,
   /\bData Scientist\b/i,
-  /\bMachine Learning\b/i,
   /\bAI Trainer\b/i,
   /\bData Labeling\b/i,
   /\bSearch Evaluator\b/i,
@@ -40,6 +38,7 @@ const EXCLUDED_ROLE_PATTERNS = [
   /\bBI Engineer\b/i,
   /\bBusiness Intelligence\b/i,
   /\bVideo Editor\b/i,
+  /\bOnline Data Analyst\b/i,
 ];
 
 const WORLDWIDE_EVIDENCE_PATTERNS = [
@@ -120,6 +119,15 @@ export function evaluateWorldwideEligibility(
     }
   }
 
+  // SPECIAL CASE: Machine Learning Engineer
+  if (!isDataEngineering && /\bMachine Learning Engineer\b/i.test(title)) {
+      const isPipelineFocused = /pipeline|platform|infrastructure|orchestration|airflow|kubernetes/i.test(description);
+      if (isPipelineFocused) {
+          isDataEngineering = true;
+          matchedRoleKeywords.push("Machine Learning Engineer (Pipeline Focused)");
+      }
+  }
+
   if (!isDataEngineering) {
     return {
       status: "REJECTED",
@@ -130,7 +138,7 @@ export function evaluateWorldwideEligibility(
     };
   }
 
-  // 2. Local Restriction Filter
+  // 2. Local Restriction Filter - THIS OVERRIDES EVERYTHING
   for (const pattern of LOCAL_RESTRICTION_PATTERNS) {
     const match = fullText.match(pattern);
     if (match) {
@@ -158,9 +166,9 @@ export function evaluateWorldwideEligibility(
     }
   }
 
-  // If location is "Worldwide" or "Anywhere" specifically
   if (!hasWorldwideEvidence) {
-      if (location.toLowerCase().includes('worldwide') || location.toLowerCase().includes('anywhere')) {
+      const locLower = location.toLowerCase();
+      if (locLower.includes('worldwide') || locLower.includes('anywhere')) {
           hasWorldwideEvidence = true;
           matchedEvidence.push(location);
       }
