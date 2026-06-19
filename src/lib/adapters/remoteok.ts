@@ -6,12 +6,17 @@ export class RemoteOkAdapter implements JobAdapter {
 
   async fetchJobs(): Promise<RawJob[]> {
     try {
-      // RemoteOK doesn't have a direct "data engineering" category in its primary endpoint,
-      // but we can try to filter by tag if supported, or just fetch all and rely on our strict filter.
-      // Primary API is /api
-      const response = await axios.get('https://remoteok.com/api?tag=data+engineer');
+      // RemoteOK API can be finicky with user agents and redirects.
+      // We'll use a specific tag to find relevant jobs.
+      const response = await axios.get('https://remoteok.com/api?tag=data+engineer', {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+      });
+
       if (!Array.isArray(response.data)) return [];
 
+      // First item is legal info
       return response.data.slice(1).map((job: any) => ({
         sourceName: this.name,
         sourceType: 'API',

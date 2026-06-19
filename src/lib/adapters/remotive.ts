@@ -6,8 +6,8 @@ export class RemotiveAdapter implements JobAdapter {
 
   async fetchJobs(): Promise<RawJob[]> {
     try {
-      // Searching for data-related jobs
-      const response = await axios.get('https://remotive.com/api/remote-jobs?search=data%20engineer');
+      // Increased count/search specificity for Remotive
+      const response = await axios.get('https://remotive.com/api/remote-jobs?category=data&limit=100');
       if (!response.data || !Array.isArray(response.data.jobs)) return [];
 
       return response.data.jobs.map((job: any) => ({

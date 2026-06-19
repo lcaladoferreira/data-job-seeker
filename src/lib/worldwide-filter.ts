@@ -8,117 +8,82 @@ export interface WorldwideEvaluation {
   matchedRoleKeywords: string[];
 }
 
-// STRICT WHITELIST for Data Engineering roles
 const DATA_ENGINEERING_TITLE_PATTERNS = [
-  /\bData Engineer\b/i,
   /\bSenior Data Engineer\b/i,
-  /\bStaff Data Engineer\b/i,
   /\bLead Data Engineer\b/i,
+  /\bStaff Data Engineer\b/i,
   /\bPrincipal Data Engineer\b/i,
+  /\bData Engineer\b/i,
   /\bAnalytics Engineer\b/i,
+  /\bData Platform Engineer\b/i,
   /\bBig Data Engineer\b/i,
-  /\bCloud Data Engineer\b/i,
-  /\bPlatform Data Engineer\b/i,
-  /\bData Infrastructure Engineer\b/i,
   /\bETL (Developer|Engineer)\b/i,
   /\bELT (Developer|Engineer)\b/i,
+  /\bSpark Engineer\b/i,
+  /\bCloud Data Engineer\b/i,
+  /\bData Infrastructure Engineer\b/i,
   /\bData Pipeline Engineer\b/i,
+  /\bData Architect\b/i,
 ];
 
-// STRICT BLACKLIST for roles to reject immediately
 const EXCLUDED_ROLE_PATTERNS = [
-  /Video Editor/i,
-  /Cinematic/i,
-  /Designer/i,
-  /Developer Advocate/i,
-  /Product Manager/i,
-  /Product Engineer/i,
-  /Software Engineer/i,
-  /Frontend/i,
-  /Backend/i,
-  /Full Stack/i,
-  /Fullstack/i,
-  /DevOps/i,
-  /SRE/i,
-  /QA/i,
-  /Data Analyst/i,
-  /Data Scientist/i,
-  /Machine Learning/i,
-  /ML Engineer/i,
-  /AI Engineer/i,
-  /Prompt Engineer/i,
-  /Marketing/i,
-  /Sales/i,
-  /Customer Success/i,
-  /Support/i,
-  /HR/i,
-  /Recruiter/i,
-  /Operations/i,
-  /Finance/i,
-  /Legal/i,
-  /Account Manager/i,
-  /Creative Director/i,
-  /Content Creator/i,
-  /Copywriter/i,
-  /Social Media/i,
-  /Virtual Assistant/i,
+  /\bData Analyst\b/i,
+  /\bBusiness Analyst\b/i,
+  /\bData Scientist\b/i,
+  /\bMachine Learning\b/i,
+  /\bAI Trainer\b/i,
+  /\bData Labeling\b/i,
+  /\bSearch Evaluator\b/i,
+  /\bMarketing Analyst\b/i,
+  /\bProduct Analyst\b/i,
+  /\bBI Developer\b/i,
+  /\bBI Engineer\b/i,
+  /\bBusiness Intelligence\b/i,
+  /\bVideo Editor\b/i,
 ];
 
-// Evidence of WORLDWIDE remote
 const WORLDWIDE_EVIDENCE_PATTERNS = [
   /Remote Worldwide/i,
   /Worldwide Remote/i,
   /\bWorldwide\b/i,
-  /\bGlobal\b/i,
   /\bAnywhere\b/i,
   /Work from anywhere/i,
   /Anywhere in the world/i,
-  /Open to all countries/i,
-  /International applicants welcome/i,
   /Open to candidates worldwide/i,
-  /Distributed globally and hiring worldwide/i,
+  /Applicants worldwide/i,
+  /Global remote/i,
+  /Remote globally/i,
   /No location restrictions/i,
+  /Location: Worldwide/i,
+  /Distributed globally/i,
+  /Hiring worldwide/i,
+  /Fully remote, global/i,
 ];
 
-// Hard rejection patterns for regional restrictions
 const LOCAL_RESTRICTION_PATTERNS = [
   /\bUS Only\b/i,
   /\bUSA Only\b/i,
   /\bUnited States Only\b/i,
   /\bEU Only\b/i,
   /\bUK Only\b/i,
-  /\bUK\b/,
   /\bCanada Only\b/i,
   /\bBrazil Only\b/i,
-  /\bBrasil Only\b/i,
-  /\bIndia Only\b/i,
-  /\bAustralia Only\b/i,
   /\bNorth America Only\b/i,
   /\bEurope Only\b/i,
   /\bEMEA Only\b/i,
   /\bAPAC Only\b/i,
   /\bLATAM Only\b/i,
   /\bAmericas Only\b/i,
-  /\bMexico Only\b/i,
-  /\bGermany Only\b/i,
-  /\bFrance Only\b/i,
-  /Visa unavailable/i,
-  /Work authorization required/i,
   /Must reside in/i,
   /Must be located in/i,
-  /Must be based in/i,
-  /Citizens only/i,
-  /Residents only/i,
-  /Eligible to work in/i,
+  /Work authorization required/i,
   /Authorized to work in/i,
-  /Timezone overlap only/i, // Added as per "reject" implication in core rule
   /Remote in the United States/i,
   /Remote in Europe/i,
   /Remote in Canada/i,
-  /Remote Brazil/i,
-  /\bSão Paulo\b/i,
-  /\bSao Paulo\b/i,
-  /\bRio de Janeiro\b/i,
+  /Remote in Brazil/i,
+  /\bRemote Brazil\b/i,
+  /\bRemote US\b/i,
 ];
 
 export function evaluateWorldwideEligibility(
@@ -131,10 +96,10 @@ export function evaluateWorldwideEligibility(
   const matchedRejectPatterns: string[] = [];
   const matchedRoleKeywords: string[] = [];
 
-  // 1. Role Gatekeeper - EXCLUSION FIRST
+  // Check for excluded roles FIRST in title
   for (const pattern of EXCLUDED_ROLE_PATTERNS) {
-    if (pattern.test(title) || pattern.test(location)) {
-      matchedRejectPatterns.push((title.match(pattern) || location.match(pattern))![0]);
+    if (pattern.test(title)) {
+      matchedRejectPatterns.push(title.match(pattern)![0]);
       return {
         status: "REJECTED",
         evidence: [],
@@ -145,7 +110,7 @@ export function evaluateWorldwideEligibility(
     }
   }
 
-  // Check for explicit title match against whitelist
+  // 1. Role Check
   let isDataEngineering = false;
   for (const pattern of DATA_ENGINEERING_TITLE_PATTERNS) {
     if (pattern.test(title)) {
@@ -165,7 +130,7 @@ export function evaluateWorldwideEligibility(
     };
   }
 
-  // 2. Local Restriction Filter - FORCE REJECT
+  // 2. Local Restriction Filter
   for (const pattern of LOCAL_RESTRICTION_PATTERNS) {
     const match = fullText.match(pattern);
     if (match) {
@@ -193,6 +158,14 @@ export function evaluateWorldwideEligibility(
     }
   }
 
+  // If location is "Worldwide" or "Anywhere" specifically
+  if (!hasWorldwideEvidence) {
+      if (location.toLowerCase().includes('worldwide') || location.toLowerCase().includes('anywhere')) {
+          hasWorldwideEvidence = true;
+          matchedEvidence.push(location);
+      }
+  }
+
   if (!hasWorldwideEvidence) {
     return {
       status: "REJECTED",
@@ -205,7 +178,7 @@ export function evaluateWorldwideEligibility(
 
   return {
     status: "ACCEPTED",
-    evidence: matchedEvidence,
+    evidence: Array.from(new Set(matchedEvidence)),
     rejectionReason: "",
     matchedRejectPatterns: [],
     matchedRoleKeywords,

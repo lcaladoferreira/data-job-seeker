@@ -1,112 +1,89 @@
 'use client';
+
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function IngestButton() {
   const [loading, setLoading] = useState(false);
-  const [reevaluating, setReevaluating] = useState(false);
-  const [result, setResult] = useState<any>(null);
-
-  const handleReevaluate = async () => {
-    setReevaluating(true);
-    try {
-      const res = await fetch('/api/jobs/re-evaluate', { method: 'POST' });
-      const data = await res.json();
-      if (res.ok) {
-        alert(`Cleaned up ${data.cleanedCount} irrelevant jobs from the dashboard.`);
-        window.location.reload();
-      }
-    } catch (e) {
-      alert('Failed to re-evaluate jobs');
-    } finally {
-      setReevaluating(false);
-    }
-  };
+  const [summary, setSummary] = useState<any>(null);
+  const router = useRouter();
 
   const handleIngest = async () => {
     setLoading(true);
-    setResult(null);
+    setSummary(null);
     try {
       const res = await fetch('/api/ingest/run', { method: 'POST' });
       const data = await res.json();
-      if (res.ok) {
-        setResult(data);
-      } else {
-        setResult({ error: data.error || 'Failed to start ingestion' });
-      }
-    } catch (e) {
-      setResult({ error: 'Network error' });
+      setSummary(data);
+      router.refresh();
+    } catch (error) {
+      console.error('Ingestion failed:', error);
+      alert('Ingestion failed. Check console.');
     } finally {
       setLoading(false);
     }
   };
 
+  const handleReEvaluate = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/jobs/re-evaluate', { method: 'POST' });
+      const data = await res.json();
+      alert(`Re-evaluation complete: ${data.updated} jobs updated.`);
+      router.refresh();
+    } catch (error) {
+      console.error('Re-evaluation failed:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div className="relative">
       <div className="flex gap-2">
         <button
-          onClick={handleReevaluate}
-          disabled={reevaluating}
-          className="rounded-md bg-amber-600 px-4 py-2 text-sm font-bold text-white hover:bg-amber-700 disabled:opacity-50 shadow-md"
-          title="Re-run filter on all existing jobs to remove irrelevant ones"
+          onClick={handleReEvaluate}
+          disabled={loading}
+          className="rounded-md bg-orange-700 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-800 disabled:opacity-50 shadow-sm transition"
         >
-          {reevaluating ? 'Cleaning...' : 'Clean Dashboard'}
+          Clean Dashboard
         </button>
-        <button onClick={handleIngest} disabled={loading} className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-bold text-white hover:bg-indigo-700 disabled:opacity-50 shadow-md">
-          {loading ? 'Running Ingestion...' : 'Trigger Manual Ingestion'}
+        <button
+          onClick={handleIngest}
+          disabled={loading}
+          className={`rounded-md px-4 py-2 text-sm font-semibold text-white shadow-sm transition ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+        >
+          {loading ? 'Ingesting...' : 'Trigger Manual Ingestion'}
         </button>
       </div>
-      {result && (
-        <div className={`absolute right-0 top-12 z-50 w-80 rounded-md border p-4 shadow-xl bg-white ${result.error ? 'border-red-200 bg-red-50' : 'border-green-200 bg-white'}`}>
-          {result.error ? <p className="text-sm text-red-700">{result.error}</p> : (
-            <div className="text-xs text-gray-700">
-              <p className="font-bold text-green-700 text-sm mb-2 underline underline-offset-4">Ingestion Summary</p>
-              {result.status === 'INSUFFICIENT_DATA' && (
-                <div className="mb-3 bg-red-100 border border-red-200 p-2 rounded text-red-700 font-bold">
-                  {result.message}
-                </div>
-              )}
-              <div className="grid grid-cols-3 gap-2 mb-3 bg-gray-50 p-2 rounded">
-                <div className="text-center"><p className="font-bold text-lg">{result.totalFound}</p><p className="text-[9px] uppercase">Found</p></div>
-                <div className="text-center text-green-600"><p className="font-bold text-lg">{result.totalAccepted}</p><p className="text-[9px] uppercase">Accepted</p></div>
-                <div className="text-center text-red-600"><p className="font-bold text-lg">{result.totalRejected}</p><p className="text-[9px] uppercase">Rejected</p></div>
-              </div>
 
-              {result.rejectionReasons && Object.keys(result.rejectionReasons).length > 0 && (
-                <div className="mb-3">
-                  <p className="font-bold mb-1 text-[10px] uppercase text-gray-500">Rejection Reasons:</p>
-                  {Object.entries(result.rejectionReasons).map(([reason, count]) => (
-                    <div key={reason} className="flex justify-between border-b border-gray-100 py-0.5">
-                      <span>{reason}</span>
-                      <span className="font-bold">{count as number}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
+      {summary && (
+        <div className="absolute right-0 top-12 z-50 w-80 rounded-lg bg-white p-4 shadow-xl border border-gray-200 text-sm">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="font-bold text-gray-900">Ingestion Complete</h3>
+            <button onClick={() => setSummary(null)} className="text-gray-400 hover:text-gray-600">✕</button>
+          </div>
+          <div className="space-y-1 text-gray-700">
+            <div className="flex justify-between border-b pb-1"><span>Status:</span> <span className="font-bold">{summary.status}</span></div>
+            <div className="flex justify-between"><span>Fetched:</span> <span>{summary.totalFound}</span></div>
+            <div className="flex justify-between text-green-700 font-medium"><span>Accepted:</span> <span>{summary.totalAccepted}</span></div>
+            <div className="flex justify-between text-red-700"><span>Rejected:</span> <span>{summary.totalRejected}</span></div>
+            <div className="flex justify-between text-gray-500"><span>Duplicates:</span> <span>{summary.totalDuplicates}</span></div>
+          </div>
 
-              {result.sourceBreakdown && Object.keys(result.sourceBreakdown).length > 0 && (
-                <div>
-                  <p className="font-bold mb-1 text-[10px] uppercase text-gray-500">Source Breakdown:</p>
-                  {Object.entries(result.sourceBreakdown).map(([source, stats]: [string, any]) => (
-                    <div key={source} className="flex justify-between border-b border-gray-100 py-0.5">
-                      <span>{source}</span>
-                      <span className="font-bold text-green-600">{stats.accepted}</span>
-                    </div>
-                  ))}
+          <div className="mt-3 pt-2 border-t text-[10px]">
+             <p className="font-bold text-gray-500 uppercase mb-1">Source Breakdown</p>
+             {Object.entries(summary.sourceBreakdown || {}).map(([name, stats]: any) => (
+                <div key={name} className="flex justify-between py-0.5">
+                   <span>{name}:</span>
+                   <span className="font-mono">{stats.accepted}A / {stats.rejected}R</span>
                 </div>
-              )}
+             ))}
+          </div>
 
-              <button
-                onClick={() => {
-                  setResult(null);
-                  window.location.reload();
-                }}
-                className="mt-4 w-full bg-gray-900 text-white py-1.5 rounded font-bold hover:bg-black transition"
-              >
-                Close & Refresh
-              </button>
-            </div>
+          {summary.message && (
+            <p className="mt-3 text-xs text-orange-600 font-medium bg-orange-50 p-2 rounded">{summary.message}</p>
           )}
-          {!result.error && <button onClick={() => setResult(null)} className="absolute top-2 right-2 text-gray-400 hover:text-gray-600">×</button>}
         </div>
       )}
     </div>

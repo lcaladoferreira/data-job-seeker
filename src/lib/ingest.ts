@@ -100,7 +100,7 @@ export async function runIngestion() {
     }
   }
 
-  // MINIMUM THRESHOLD CHECK
+  // MINIMUM THRESHOLD LOGGING
   const isSufficient = totalAccepted >= 30;
 
   if (isSufficient && acceptedJobsForDigest.length > 0) {
