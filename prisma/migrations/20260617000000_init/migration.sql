@@ -58,6 +58,7 @@ CREATE TABLE "IngestionRun" (
     "jobsAccepted" INTEGER NOT NULL DEFAULT 0,
     "jobsRejected" INTEGER NOT NULL DEFAULT 0,
     "errorLog" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "IngestionRun_pkey" PRIMARY KEY ("id")
 );

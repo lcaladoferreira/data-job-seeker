@@ -68,6 +68,7 @@ model IngestionRun {
   jobsAccepted Int      @default(0)
   jobsRejected Int      @default(0)
   errorLog     String?
+  createdAt    DateTime @default(now())
 }
 
 model AlertLog {
