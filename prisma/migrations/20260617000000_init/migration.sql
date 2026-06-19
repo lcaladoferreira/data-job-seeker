@@ -16,10 +16,10 @@ CREATE TABLE "Job" (
     "descriptionText" TEXT NOT NULL,
     "descriptionSnippet" TEXT,
     "worldwideStatus" "WorldwideStatus" NOT NULL,
-    "worldwideEvidence" TEXT[],
+    "worldwideEvidence" JSONB,
     "rejectionReason" TEXT,
-    "matchedKeywords" TEXT[],
-    "matchedRejectPatterns" TEXT[],
+    "matchedRejectPatterns" JSONB,
+    "matchedKeywords" JSONB,
     "urlStatus" TEXT,
     "httpStatus" INTEGER,
     "contentHash" TEXT,
@@ -38,9 +38,10 @@ CREATE TABLE "Source" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "type" TEXT NOT NULL,
+    "baseUrl" TEXT,
     "enabled" BOOLEAN NOT NULL DEFAULT true,
-    "config" JSONB,
     "lastRunAt" TIMESTAMP(3),
+    "config" JSONB,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -57,7 +58,6 @@ CREATE TABLE "IngestionRun" (
     "jobsAccepted" INTEGER NOT NULL DEFAULT 0,
     "jobsRejected" INTEGER NOT NULL DEFAULT 0,
     "errorLog" TEXT,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "IngestionRun_pkey" PRIMARY KEY ("id")
 );
@@ -75,16 +75,16 @@ CREATE TABLE "AlertLog" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Job_applyUrl_key" ON "Job"("applyUrl");
+CREATE INDEX "Job_worldwideStatus_idx" ON "Job"("worldwideStatus");
 
 -- CreateIndex
-CREATE INDEX "Job_worldwideStatus_idx" ON "Job"("worldwideStatus");
+CREATE INDEX "Job_sourceName_idx" ON "Job"("sourceName");
 
 -- CreateIndex
 CREATE INDEX "Job_company_idx" ON "Job"("company");
 
 -- CreateIndex
-CREATE INDEX "Job_sourceName_idx" ON "Job"("sourceName");
+CREATE UNIQUE INDEX "Job_title_company_key" ON "Job"("title", "company");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Source_name_key" ON "Source"("name");

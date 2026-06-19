@@ -39,8 +39,12 @@ model Job {
   alertedEmailAt     DateTime?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
+  alertLogs          AlertLog[]
 
   @@unique([title, company])
+  @@index([worldwideStatus])
+  @@index([sourceName])
+  @@index([company])
 }
 
 model Source {
@@ -69,6 +73,7 @@ model IngestionRun {
 model AlertLog {
   id        String   @id @default(uuid())
   jobId     String
+  job       Job      @relation(fields: [jobId], references: [id])
   type      String
   status    String
   error     String?
