@@ -172,10 +172,10 @@ async function processJob(rawJob: RawJob) {
       data: {
         lastSeenAt: new Date(),
         worldwideStatus: evaluation.status as WorldwideStatus,
-        worldwideEvidence: evaluation.evidence,
+        worldwideEvidence: evaluation.evidence as any,
         rejectionReason: evaluation.rejectionReason,
-        matchedRejectPatterns: evaluation.matchedRejectPatterns,
-        matchedKeywords: evaluation.matchedRoleKeywords,
+        matchedRejectPatterns: evaluation.matchedRejectPatterns as any,
+        matchedKeywords: evaluation.matchedRoleKeywords as any,
       },
     });
 
@@ -202,10 +202,10 @@ async function processJob(rawJob: RawJob) {
       data: {
         lastSeenAt: new Date(),
         worldwideStatus: evaluation.status as WorldwideStatus,
-        worldwideEvidence: evaluation.evidence,
+        worldwideEvidence: evaluation.evidence as any,
         rejectionReason: evaluation.rejectionReason,
-        matchedRejectPatterns: evaluation.matchedRejectPatterns,
-        matchedKeywords: evaluation.matchedRoleKeywords,
+        matchedRejectPatterns: evaluation.matchedRejectPatterns as any,
+        matchedKeywords: evaluation.matchedRoleKeywords as any,
       },
     });
 
@@ -233,10 +233,10 @@ async function processJob(rawJob: RawJob) {
       descriptionText: rawJob.descriptionText,
       descriptionSnippet: rawJob.descriptionText.substring(0, 500),
       worldwideStatus: evaluation.status as WorldwideStatus,
-      worldwideEvidence: evaluation.evidence,
+      worldwideEvidence: evaluation.evidence as any,
       rejectionReason: evaluation.rejectionReason,
-      matchedRejectPatterns: evaluation.matchedRejectPatterns,
-      matchedKeywords: evaluation.matchedRoleKeywords,
+      matchedRejectPatterns: evaluation.matchedRejectPatterns as any,
+      matchedKeywords: evaluation.matchedRoleKeywords as any,
     },
   });
 

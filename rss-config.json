@@ -7,5 +7,11 @@
   { "name": "Jobspresso Data", "url": "https://jobspresso.co/category/data-science-jobs/feed/" },
   { "name": "Indeed Worldwide Data", "url": "https://www.indeed.com/rss?q=data+engineer+worldwide" },
   { "name": "Monster Worldwide Data", "url": "https://www.monster.com/jobs/search/rss/?q=data-engineer&where=worldwide" },
-  { "name": "RemoteOK Data", "url": "https://remoteok.com/remote-data-jobs.rss" }
+  { "name": "RemoteOK Data", "url": "https://remoteok.com/remote-data-jobs.rss" },
+  { "name": "Pycoder's Jobs", "url": "https://pycoders.com/jobs/feed" },
+  { "name": "DataJobshub", "url": "https://datajobshub.com/feed/" },
+  { "name": "RemoteML", "url": "https://remoteml.com/feed/" },
+  { "name": "AI Jobs", "url": "https://ai-jobs.net/rss/" },
+  { "name": "No Desk Data", "url": "https://nodesk.co/remote-jobs/data/index.xml" },
+  { "name": "Relocate Data", "url": "https://relocate.me/rss/data" }
 ]

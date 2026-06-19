@@ -124,56 +124,63 @@ export default async function DashboardPage({
               No jobs found matching your criteria.
             </div>
           )}
-          {jobs.map((job) => (
-            <div key={job.id} className="rounded-lg bg-white p-6 shadow-sm border border-gray-100 hover:shadow-md transition">
-              <div className="flex flex-col md:flex-row items-start justify-between gap-4">
-                <div className="flex-1">
-                  <Link href={`/jobs/${job.id}`} className="text-xl font-bold text-blue-600 hover:underline decoration-2">
-                    {job.title}
-                  </Link>
-                  <p className="font-semibold text-gray-800 mt-0.5">{job.company}</p>
-                  <div className="mt-3 flex flex-wrap gap-4 text-xs text-gray-500">
-                    <span className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded">📍 {job.location || 'Remote'}</span>
-                    <span className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded">🏢 {job.sourceName}</span>
-                    <span className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded">📅 {job.firstSeenAt.toLocaleDateString()}</span>
+          {jobs.map((job) => {
+            // Safe JSON handling
+            const matchedKeywords = Array.isArray(job.matchedKeywords) ? job.matchedKeywords as string[] : [];
+            const worldwideEvidence = Array.isArray(job.worldwideEvidence) ? job.worldwideEvidence as string[] : [];
+            const matchedRejectPatterns = Array.isArray(job.matchedRejectPatterns) ? job.matchedRejectPatterns as string[] : [];
+
+            return (
+              <div key={job.id} className="rounded-lg bg-white p-6 shadow-sm border border-gray-100 hover:shadow-md transition">
+                <div className="flex flex-col md:flex-row items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <Link href={`/jobs/${job.id}`} className="text-xl font-bold text-blue-600 hover:underline decoration-2">
+                      {job.title}
+                    </Link>
+                    <p className="font-semibold text-gray-800 mt-0.5">{job.company}</p>
+                    <div className="mt-3 flex flex-wrap gap-4 text-xs text-gray-500">
+                      <span className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded">📍 {job.location || 'Remote'}</span>
+                      <span className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded">🏢 {job.sourceName}</span>
+                      <span className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded">📅 {job.firstSeenAt.toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                  <div className="w-full md:w-auto text-right">
+                    {job.worldwideStatus === 'ACCEPTED' ? (
+                      <span className="inline-block rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-800 uppercase tracking-tighter">
+                        ACCEPTED
+                      </span>
+                    ) : (
+                      <span className="inline-block rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-800 uppercase tracking-tighter">
+                        REJECTED
+                      </span>
+                    )}
                   </div>
                 </div>
-                <div className="w-full md:w-auto text-right">
-                  {job.worldwideStatus === 'ACCEPTED' ? (
-                    <span className="inline-block rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-800 uppercase tracking-tighter">
-                      ACCEPTED
-                    </span>
-                  ) : (
-                    <span className="inline-block rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-800 uppercase tracking-tighter">
-                      REJECTED
-                    </span>
-                  )}
-                </div>
-              </div>
 
-              <div className="mt-4 flex flex-wrap gap-2">
-                {job.worldwideStatus === 'ACCEPTED' && job.matchedKeywords.map((kw: string, i: number) => (
-                  <span key={`kw-${i}`} className="rounded bg-indigo-50 px-2 py-0.5 text-[10px] text-indigo-700 border border-indigo-200 font-bold uppercase">
-                    Role: {kw}
-                  </span>
-                ))}
-                {job.worldwideEvidence.map((ev: string, i: number) => (
-                  <span key={`ev-${i}`} className="rounded bg-blue-50 px-2 py-0.5 text-[10px] text-blue-700 border border-blue-200 font-medium">
-                    {ev}
-                  </span>
-                ))}
-              </div>
-
-              {job.rejectionReason && (
-                <div className="mt-3 bg-red-50 p-2 rounded text-[11px] text-red-700 border border-red-100 font-bold">
-                  REJECTION REASON: {job.rejectionReason}
-                  {job.matchedRejectPatterns.length > 0 && (
-                    <span className="ml-2 font-normal opacity-75">({job.matchedRejectPatterns.join(', ')})</span>
-                  )}
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {job.worldwideStatus === 'ACCEPTED' && matchedKeywords.map((kw: string, i: number) => (
+                    <span key={`kw-${i}`} className="rounded bg-indigo-50 px-2 py-0.5 text-[10px] text-indigo-700 border border-indigo-200 font-bold uppercase">
+                      Role: {kw}
+                    </span>
+                  ))}
+                  {worldwideEvidence.map((ev: string, i: number) => (
+                    <span key={`ev-${i}`} className="rounded bg-blue-50 px-2 py-0.5 text-[10px] text-blue-700 border border-blue-200 font-medium">
+                      {ev}
+                    </span>
+                  ))}
                 </div>
-              )}
-            </div>
-          ))}
+
+                {job.rejectionReason && (
+                  <div className="mt-3 bg-red-50 p-2 rounded text-[11px] text-red-700 border border-red-100 font-bold">
+                    REJECTION REASON: {job.rejectionReason}
+                    {matchedRejectPatterns.length > 0 && (
+                      <span className="ml-2 font-normal opacity-75">({matchedRejectPatterns.join(', ')})</span>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         {totalPages > 1 && (

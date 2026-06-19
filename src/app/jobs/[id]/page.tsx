@@ -9,9 +9,13 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
   const { id } = await params;
   const job = await prisma.job.findUnique({
     where: { id },
-    include: { alertLogs: { orderBy: { sentAt: 'desc' } } },
   });
   if (!job) notFound();
+
+  // Handle Json fields which might be arrays or strings depending on DB provider/state
+  const matchedKeywords = Array.isArray(job.matchedKeywords) ? job.matchedKeywords as string[] : [];
+  const worldwideEvidence = Array.isArray(job.worldwideEvidence) ? job.worldwideEvidence as string[] : [];
+  const matchedRejectPatterns = Array.isArray(job.matchedRejectPatterns) ? job.matchedRejectPatterns as string[] : [];
 
   return (
     <div className="min-h-screen bg-gray-50 p-8 text-gray-900">
@@ -56,30 +60,30 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
             <div className={`p-4 rounded-md ${job.worldwideStatus === 'ACCEPTED' ? 'bg-green-50 border border-green-100' : 'bg-red-50 border border-red-100'}`}>
               <p className={`font-bold text-lg ${job.worldwideStatus === 'ACCEPTED' ? 'text-green-800' : 'text-red-800'}`}>Status: {job.worldwideStatus}</p>
 
-              {job.worldwideStatus === 'ACCEPTED' && job.matchedKeywords.length > 0 && (
+              {job.worldwideStatus === 'ACCEPTED' && matchedKeywords.length > 0 && (
                 <div className="mt-3">
                   <p className="text-sm font-bold text-gray-700">Role Match Evidence:</p>
                   <div className="flex flex-wrap gap-2 mt-1">
-                    {job.matchedKeywords.map((kw, i) => (
+                    {matchedKeywords.map((kw, i) => (
                       <span key={i} className="bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded text-xs font-bold uppercase">{kw}</span>
                     ))}
                   </div>
                 </div>
               )}
 
-              {job.worldwideEvidence.length > 0 && (
+              {worldwideEvidence.length > 0 && (
                 <div className="mt-3 text-sm">
                   <p className="font-bold text-gray-700">Worldwide Remote Evidence:</p>
-                  <ul className="list-disc list-inside mt-1 text-gray-600">{job.worldwideEvidence.map((ev, i) => <li key={i}>{ev}</li>)}</ul>
+                  <ul className="list-disc list-inside mt-1 text-gray-600">{worldwideEvidence.map((ev, i) => <li key={i}>{ev}</li>)}</ul>
                 </div>
               )}
 
               {job.rejectionReason && (
                 <div className="mt-3">
                    <p className="text-sm font-bold text-red-800 italic">Rejection Reason: {job.rejectionReason}</p>
-                   {job.matchedRejectPatterns.length > 0 && (
+                   {matchedRejectPatterns.length > 0 && (
                      <div className="mt-1 flex flex-wrap gap-2">
-                        {job.matchedRejectPatterns.map((p, i) => (
+                        {matchedRejectPatterns.map((p, i) => (
                           <span key={i} className="bg-red-100 text-red-800 px-2 py-0.5 rounded text-xs font-medium">{p}</span>
                         ))}
                      </div>
